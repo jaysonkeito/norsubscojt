@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CoordinatorController;
+use App\Http\Controllers\PendingApprovalController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\RequirementController;
@@ -46,6 +47,9 @@ Route::middleware('auth')->group(function () {
     // Admin only
     Route::middleware('role:admin')->group(function () {
         Route::resource('coordinators', CoordinatorController::class)->except(['show']);
+        Route::get('/pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals.index');
+        Route::patch('/pending-approvals/{pendingApproval}/approve', [PendingApprovalController::class, 'approve'])->name('pending-approvals.approve');
+        Route::delete('/pending-approvals/{pendingApproval}/reject', [PendingApprovalController::class, 'reject'])->name('pending-approvals.reject');
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
         Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     });

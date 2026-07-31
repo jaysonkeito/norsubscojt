@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -46,6 +47,12 @@ class AuthController extends Controller
             ])->onlyInput('login');
         }
 
+        if ($user->isPending()) {
+            return back()->withErrors([
+                'login' => 'Your account is still pending approval from the System Admin. Please check back later.',
+            ])->onlyInput('login');
+        }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
@@ -57,34 +64,83 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
+    /**
+     * Unified registration for Students, OJT Coordinators, and Office/Companies.
+     * - Student accounts are created active immediately (no approval needed) and auto-logged in.
+     * - Coordinator and Office/Company accounts are created as 'pending' and must be
+     *   approved by the System Admin before they can log in.
+     */
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'account_type' => ['required', 'in:student,coordinator,company'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'student_id_no' => ['required', 'string', 'unique:students'],
-            'course' => ['required', 'string'],
-            'year_level' => ['required', 'string'],
+            'student_id_no' => ['required_if:account_type,student', 'nullable', 'string', 'unique:students,student_id_no'],
+            'course' => ['required_if:account_type,student', 'nullable', 'string'],
+            'year_level' => ['required_if:account_type,student', 'nullable', 'string'],
+            'company_name' => ['required_if:account_type,company', 'nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
+        $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
+
+        if ($validated['account_type'] === 'student') {
+            $user = User::create([
+                'name' => $fullName,
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'student',
+                'status' => 'active',
+            ]);
+
+            Student::create([
+                'user_id' => $user->id,
+                'student_id_no' => $validated['student_id_no'],
+                'course' => $validated['course'],
+                'year_level' => $validated['year_level'],
+            ]);
+
+            Auth::login($user);
+
+            return redirect()->route('dashboard');
+        }
+
+        if ($validated['account_type'] === 'coordinator') {
+            User::create([
+                'name' => $fullName,
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'coordinator',
+                'status' => 'pending',
+            ]);
+
+            return redirect()->route('login')->with(
+                'success',
+                'Your OJT Coordinator account has been submitted and is pending approval from the System Admin.'
+            );
+        }
+
+        // Office / Company registration — creates the Company record too, both pending admin review
+        $company = Company::create([
+            'name' => $validated['company_name'],
+            'moa_status' => 'pending',
+        ]);
+
+        User::create([
+            'name' => $fullName,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'student',
+            'role' => 'company',
+            'status' => 'pending',
+            'company_id' => $company->id,
         ]);
 
-        Student::create([
-            'user_id' => $user->id,
-            'student_id_no' => $validated['student_id_no'],
-            'course' => $validated['course'],
-            'year_level' => $validated['year_level'],
-        ]);
-
-        Auth::login($user);
-
-        return redirect()->route('dashboard');
+        return redirect()->route('login')->with(
+            'success',
+            'Your Office/Company account has been submitted and is pending approval from the System Admin.'
+        );
     }
 
     public function logout(Request $request)

@@ -2,6 +2,15 @@
     <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
     @if(auth()->user()->role === 'admin')
     <li class="nav-item"><a class="nav-link" href="{{ route('coordinators.index') }}"><i class="bi bi-person-badge"></i> OJT Coordinators</a></li>
+    <li class="nav-item">
+        <a class="nav-link d-flex align-items-center" href="{{ route('pending-approvals.index') }}">
+            <i class="bi bi-person-check"></i> <span class="ms-1">Pending Approvals</span>
+            @php($pendingCount = \App\Models\User::where('status', 'pending')->count())
+            @if($pendingCount > 0)
+                <span class="badge bg-danger ms-auto">{{ $pendingCount }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if(in_array(auth()->user()->role, ['admin', 'coordinator']))
     <li class="nav-item"><a class="nav-link" href="{{ route('students.index') }}"><i class="bi bi-people-fill"></i> Interns</a></li>

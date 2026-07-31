@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'company_id',
+        'name', 'email', 'password', 'role', 'status', 'company_id',
     ];
 
     protected $hidden = [
@@ -60,5 +60,15 @@ class User extends Authenticatable
     public function isCompany(): bool
     {
         return $this->role === 'company';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
     }
 }

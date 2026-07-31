@@ -14,7 +14,12 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                <div class="password-input-group">
+                    <input type="password" name="password" id="loginPassword" class="form-control" placeholder="Enter your password" required oninput="toggleEyeVisibility('loginPassword', 'loginEyeBtn')">
+                    <button class="btn password-toggle-btn eye-btn-hidden" type="button" id="loginEyeBtn" onclick="togglePassword('loginPassword', 'loginPasswordIcon')">
+                        <i class="bi bi-eye" id="loginPasswordIcon"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-check mb-3">
                 <input type="checkbox" name="remember" class="form-check-input" id="remember">
@@ -27,4 +32,30 @@
         </p>
     </div>
 </div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+function toggleEyeVisibility(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (input.value.length > 0) {
+        button.classList.remove('eye-btn-hidden');
+    } else {
+        button.classList.add('eye-btn-hidden');
+    }
+}
+</script>
 @endsection

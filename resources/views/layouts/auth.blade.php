@@ -79,11 +79,49 @@
             border-color: #084a8a;
             color: #fff;
         }
+
+        /* Custom password field wrapper — one continuous border around
+           an input + toggle button, so it always reads as a single field
+           regardless of whether the eye icon is visible or hidden. */
+        .password-input-group {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            background-color: #fff;
+            overflow: hidden;
+        }
+        .password-input-group:focus-within {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+        }
+        .password-input-group .form-control {
+            border: none;
+            box-shadow: none;
+            background-color: transparent;
+        }
+        .password-input-group .form-control:focus {
+            box-shadow: none;
+        }
+        .password-toggle-btn {
+            border: none;
+            background-color: transparent;
+            color: #6c757d;
+        }
+        .password-toggle-btn:hover,
+        .password-toggle-btn:focus {
+            background-color: transparent;
+            color: #495057;
+            box-shadow: none;
+        }
+        .eye-btn-hidden {
+            visibility: hidden;
+        }
         .auth-card a { color: #0a5aa8; text-decoration: none; font-weight: 500; }
         .auth-card a:hover { text-decoration: underline; }
         .clock-o {
-            width: 0.78em;
-            height: 0.78em;
+            width: 0.80em;
+            height: 0.80em;
             display: inline-block;
             vertical-align: -0.05em;
             margin-right: 1px;
@@ -116,6 +154,18 @@
     </svg>-->
 
     <div class="auth-card-wrap">
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0 ps-3">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         @yield('content')
     </div>
 

@@ -11,10 +11,10 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-            ['email' => 'admin@norsu.edu.ph'],
+            ['email' => 'norsubscojt@gmail.com'],
             [
                 'name' => 'System Administrator',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('norsubscojt2026'),
                 'role' => 'admin',
             ]
         );
@@ -23,7 +23,7 @@ class AdminUserSeeder extends Seeder
             ['email' => 'coordinator@norsu.edu.ph'],
             [
                 'name' => 'OJT Coordinator',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('norsubscojt2026'),
                 'role' => 'coordinator',
             ]
         );
