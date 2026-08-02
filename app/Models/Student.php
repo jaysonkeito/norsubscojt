@@ -11,9 +11,18 @@ class Student extends Model
 
     protected $fillable = [
         'user_id', 'student_id_no', 'course', 'year_level',
-        'contact_number', 'address', 'company_id', 'coordinator_id',
+        'contact_number', 'address', 'gender', 'birthdate', 'phone_number',
+        'guardian_name', 'guardian_contact', 'facebook_link', 'youtube_link',
+        'linkedin_link', 'photo_path', 'company_id', 'coordinator_id',
         'required_hours', 'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'birthdate' => 'date',
+        ];
+    }
 
     public function user()
     {
@@ -77,5 +86,15 @@ class Student extends Model
             'pending_days' => (int) ($counts['pending'] ?? 0),
             'rejected_days' => (int) ($counts['rejected'] ?? 0),
         ];
+    }
+
+    /**
+     * A profile counts as "complete" once the essentials (Student ID, Program,
+     * Year Level) are filled in. Everything else (gender, birthdate, guardian
+     * info, etc.) is optional.
+     */
+    public function isProfileComplete(): bool
+    {
+        return !empty($this->student_id_no) && !empty($this->course) && !empty($this->year_level);
     }
 }

@@ -1,4 +1,13 @@
 <ul class="nav flex-column">
+@php
+    $lockedForProfile = auth()->user()->isStudent()
+        && auth()->user()->student
+        && !auth()->user()->student->isProfileComplete();
+@endphp
+@if($lockedForProfile)
+    <li class="nav-item"><a class="nav-link active" href="{{ route('profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
+    <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
+@else
     <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
     @if(auth()->user()->role === 'admin')
     <li class="nav-item"><a class="nav-link" href="{{ route('coordinators.index') }}"><i class="bi bi-person-badge"></i> OJT Coordinators</a></li>
@@ -21,4 +30,5 @@
     <li class="nav-item"><a class="nav-link" href="{{ route('timelogs.index') }}"><i class="bi bi-clock-history"></i> Time Logs (Attendance)</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ route('requirements.index') }}"><i class="bi bi-file-earmark-text"></i> Requirements</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ route('announcements.index') }}"><i class="bi bi-megaphone"></i> Announcements</a></li>
+@endif
 </ul>

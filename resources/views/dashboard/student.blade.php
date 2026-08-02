@@ -3,6 +3,13 @@
 @section('content')
 <h3 class="mb-4">Welcome, {{ auth()->user()->name }}</h3>
 
+@if($student && !$student->isProfileComplete())
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>Please update your profile details.</span>
+    <a href="{{ route('profile.complete') }}" class="btn btn-sm btn-warning">Update Now</a>
+</div>
+@endif
+
 @if($student)
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
@@ -73,7 +80,7 @@
                 <td><span class="badge bg-{{ $log->status === 'approved' ? 'success' : ($log->status === 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($log->status) }}</span></td>
             </tr>
         @empty
-            <tr><td colspan="5" class="text-center text-muted">No time logs yet. <a href="{{ route('timelogs.create') }}">Add one</a>.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">No time logs yet. Your Coordinator or Host Company will record your attendance here.</td></tr>
         @endforelse
         </tbody>
     </table>

@@ -19,9 +19,9 @@ class AuthController extends Controller
     }
 
     /**
-     * Admin, Coordinator, and Company accounts log in with email + password.
-     * Student (Intern) accounts log in with Student ID + password.
-     * The login form has a single "login" field that accepts either.
+     * Everyone logs in with either their Email or their Username + password.
+     * (Admin-created Interns get username = their Student ID automatically,
+     * so this one field covers both cases uniformly.)
      */
     public function login(Request $request)
     {
@@ -33,13 +33,9 @@ class AuthController extends Controller
         $loginInput = trim($request->input('login'));
         $isEmail = filter_var($loginInput, FILTER_VALIDATE_EMAIL) !== false;
 
-        if ($isEmail) {
-            $user = User::where('email', $loginInput)->first();
-        } else {
-            // Treat input as a Student ID No. and resolve to the linked user account
-            $student = Student::where('student_id_no', $loginInput)->first();
-            $user = $student?->user;
-        }
+        $user = $isEmail
+            ? User::where('email', $loginInput)->first()
+            : User::where('username', $loginInput)->first();
 
         if (!$user || !Hash::check($request->input('password'), $user->password)) {
             return back()->withErrors([
@@ -56,6 +52,12 @@ class AuthController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
+        // First login after registration: send Interns to finish their profile
+        // (Student ID, Program, Year Level, etc.) before they see the dashboard.
+        if ($user->isStudent() && $user->student && !$user->student->isProfileComplete()) {
+            return redirect()->route('profile.complete');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 
@@ -65,22 +67,22 @@ class AuthController extends Controller
     }
 
     /**
-     * Unified registration for Students, OJT Coordinators, and Office/Companies.
-     * - Student accounts are created active immediately (no approval needed) and auto-logged in.
-     * - Coordinator and Office/Company accounts are created as 'pending' and must be
-     *   approved by the System Admin before they can log in.
+     * Simplified registration for all three self-service roles.
+     * - Intern: created active immediately, but with an *incomplete* Student
+     *   profile — they finish the rest (Student ID, Program, Year Level, etc.)
+     *   the first time they log in.
+     * - Coordinator / Office-Company: created as 'pending', must be approved
+     *   by the System Admin before they can log in at all.
      */
     public function register(Request $request)
     {
         $validated = $request->validate([
             'account_type' => ['required', 'in:student,coordinator,company'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'student_id_no' => ['required_if:account_type,student', 'nullable', 'string', 'unique:students,student_id_no'],
-            'course' => ['required_if:account_type,student', 'nullable', 'string'],
-            'year_level' => ['required_if:account_type,student', 'nullable', 'string'],
             'company_name' => ['required_if:account_type,company', 'nullable', 'string', 'max:255'],
         ]);
 
@@ -89,27 +91,29 @@ class AuthController extends Controller
         if ($validated['account_type'] === 'student') {
             $user = User::create([
                 'name' => $fullName,
+                'username' => $validated['username'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'student',
                 'status' => 'active',
             ]);
 
+            // Intentionally minimal — the rest is filled in via the
+            // post-login "complete your profile" step.
             Student::create([
                 'user_id' => $user->id,
-                'student_id_no' => $validated['student_id_no'],
-                'course' => $validated['course'],
-                'year_level' => $validated['year_level'],
             ]);
 
-            Auth::login($user);
-
-            return redirect()->route('dashboard');
+            return redirect()->route('login')->with(
+                'success',
+                'Account created! Please sign in to finish setting up your profile.'
+            );
         }
 
         if ($validated['account_type'] === 'coordinator') {
             User::create([
                 'name' => $fullName,
+                'username' => $validated['username'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'coordinator',
@@ -130,6 +134,7 @@ class AuthController extends Controller
 
         User::create([
             'name' => $fullName,
+            'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'company',

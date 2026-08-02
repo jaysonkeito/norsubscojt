@@ -51,6 +51,7 @@ class StudentController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $validated['student_id_no'],
             'email' => $email,
             'password' => Hash::make($password),
             'role' => 'student',
@@ -71,7 +72,7 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')->with(
             'success',
-            "Student created. Login credentials — Student ID: {$validated['student_id_no']} | Password: {$password}"
+            "Student created. Login credentials — Username/Student ID: {$validated['student_id_no']} | Password: {$password}"
         );
     }
 

@@ -6,13 +6,17 @@
         <div class="auth-brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
         <h4 class="mb-1 text-center">@include('partials.clock-o')JT Tracker</h4>
         <p class="text-muted text-center mb-4">NORSU Bayawan-Sta. Catalina Campus</p>
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
             <div class="mb-3">
-                <label class="form-label">Email or Student ID</label>
-                <input type="text" name="login" class="form-control" value="{{ old('login') }}" placeholder="Enter your Email or Student ID" required autofocus>
+                <label class="form-label">Email or Username</label>
+                <div class="icon-input-group">
+                    <input type="text" name="login" class="form-control" value="{{ old('login') }}" placeholder="Enter your Email or Username" required autofocus>
+                    <span class="icon-input-suffix"><i class="bi bi-person-circle"></i></span>
+                </div>
             </div>
-            <div class="mb-3">
+            <div class="mb-2">
                 <label class="form-label">Password</label>
                 <div class="password-input-group">
                     <input type="password" name="password" id="loginPassword" class="form-control" placeholder="Enter your password" required oninput="toggleEyeVisibility('loginPassword', 'loginEyeBtn')">
@@ -21,13 +25,28 @@
                     </button>
                 </div>
             </div>
+            <div class="mb-3">
+                <a href="{{ route('password.request') }}" class="small">Forgot password?</a>
+            </div>
             <div class="form-check mb-3">
                 <input type="checkbox" name="remember" class="form-check-input" id="remember">
-                <label class="form-check-label" for="remember">Remember me</label>
+                <label class="form-check-label" for="remember">Remember me on this device</label>
             </div>
-            <button type="submit" class="btn btn-azure w-100">Login</button>
+            <button type="submit" class="btn btn-azure w-100 d-flex align-items-center justify-content-center gap-2">
+                Sign In <i class="bi bi-arrow-right"></i>
+            </button>
         </form>
-        <p class="text-center mt-3 mb-0">
+
+        <div class="auth-divider my-4"><span>or</span></div>
+
+        <a href="{{ route('google.redirect', 'student') }}" class="btn btn-google w-100 mb-2">
+            <i class="bi bi-google"></i> Sign in with Google (Student)
+        </a>
+        <a href="{{ route('google.redirect', 'coordinator') }}" class="btn btn-google w-100">
+            <i class="bi bi-google"></i> Sign in with Google (Coordinator)
+        </a>
+
+        <p class="text-center mt-4 mb-0">
             No account? <a href="{{ route('register') }}">Register as Student</a>
         </p>
     </div>

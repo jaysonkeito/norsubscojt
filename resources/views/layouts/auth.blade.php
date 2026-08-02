@@ -117,11 +117,77 @@
         .eye-btn-hidden {
             visibility: hidden;
         }
+
+        /* Icon-suffix input (e.g. the Email/Student ID field on Login) */
+        .icon-input-group {
+            position: relative;
+        }
+        .icon-input-group .form-control {
+            padding-right: 2.5rem;
+        }
+        .icon-input-suffix {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            pointer-events: none;
+        }
+
+        /* "or" divider between password login and Google buttons */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #adb5bd;
+            font-size: 0.85rem;
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .auth-divider span {
+            padding: 0 0.75rem;
+        }
+
+        /* Google sign-in buttons */
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            color: #3c4043;
+            font-weight: 500;
+        }
+        .btn-google:hover {
+            background-color: #f8f9fa;
+            color: #3c4043;
+            border-color: #dadce0;
+        }
+        .btn-google i {
+            color: #4285F4;
+        }
+
+        /* Segmented role toggle on Register (btn-check + label pattern) */
+        .role-toggle .btn-outline-azure {
+            color: #0a5aa8;
+            border-color: #0a5aa8;
+            background-color: #fff;
+        }
+        .role-toggle .btn-check:checked + .btn-outline-azure {
+            background-color: #0a5aa8;
+            border-color: #0a5aa8;
+            color: #fff;
+        }
         .auth-card a { color: #0a5aa8; text-decoration: none; font-weight: 500; }
         .auth-card a:hover { text-decoration: underline; }
         .clock-o {
-            width: 0.80em;
-            height: 0.80em;
+            width: 0.78em;
+            height: 0.78em;
             display: inline-block;
             vertical-align: -0.05em;
             margin-right: 1px;

@@ -10,52 +10,34 @@
         <form method="POST" action="{{ route('register') }}">
             @csrf
 
-            <div class="mb-3">
-                <label class="form-label">I am registering as</label>
-                <select name="account_type" id="accountType" class="form-select" required onchange="toggleRoleFields()">
-                    <option value="student" {{ old('account_type', 'student') === 'student' ? 'selected' : '' }}>Intern (Student)</option>
-                    <option value="coordinator" {{ old('account_type') === 'coordinator' ? 'selected' : '' }}>OJT Coordinator</option>
-                    <option value="company" {{ old('account_type') === 'company' ? 'selected' : '' }}>Office/Company</option>
-                </select>
-                <small class="text-muted" id="roleHint">Intern accounts are activated immediately — no approval needed.</small>
+            <label class="form-label d-block text-center mb-2">I am registering as</label>
+            <div class="btn-group w-100 mb-2 role-toggle" role="group">
+                <input type="radio" class="btn-check" name="account_type" id="typeStudent" value="student" autocomplete="off" {{ old('account_type', 'student') === 'student' ? 'checked' : '' }} onchange="toggleRoleFields()">
+                <label class="btn btn-outline-azure" for="typeStudent">Intern</label>
+
+                <input type="radio" class="btn-check" name="account_type" id="typeCoordinator" value="coordinator" autocomplete="off" {{ old('account_type') === 'coordinator' ? 'checked' : '' }} onchange="toggleRoleFields()">
+                <label class="btn btn-outline-azure" for="typeCoordinator">OJT Coordinator</label>
+
+                <input type="radio" class="btn-check" name="account_type" id="typeCompany" value="company" autocomplete="off" {{ old('account_type') === 'company' ? 'checked' : '' }} onchange="toggleRoleFields()">
+                <label class="btn btn-outline-azure" for="typeCompany">Office/Company</label>
             </div>
+            <p class="text-muted small text-center mb-4" id="roleHint">Intern accounts are activated immediately. You'll finish your student profile after your first login.</p>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" required>
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" value="{{ old('username') }}" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" required>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
-            </div>
-
-            {{-- Student-only fields --}}
-            <div id="studentFields" class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Student ID No.</label>
-                    <input type="text" name="student_id_no" class="form-control" value="{{ old('student_id_no') }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Course</label>
-                    <input type="text" name="course" class="form-control" value="{{ old('course') }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Year Level</label>
-                    <input type="text" name="year_level" class="form-control" value="{{ old('year_level') }}">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
                 </div>
             </div>
 
             {{-- Office/Company-only field --}}
             <div id="companyFields" class="row d-none">
                 <div class="col-12 mb-3">
-                    <label class="form-label">Company / Office Name</label>
+                    <label class="form-label">Office/Company Name</label>
                     <input type="text" name="company_name" class="form-control" value="{{ old('company_name') }}">
                 </div>
             </div>
@@ -71,7 +53,7 @@
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Confirm Password</label>
+                    <label class="form-label">Verify Password</label>
                     <div class="password-input-group">
                         <input type="password" name="password_confirmation" id="regPasswordConfirm" class="form-control" required oninput="toggleEyeVisibility('regPasswordConfirm', 'regConfirmEyeBtn')">
                         <button class="btn password-toggle-btn eye-btn-hidden" type="button" id="regConfirmEyeBtn" onclick="togglePassword('regPasswordConfirm', 'regPasswordConfirmIcon')">
@@ -79,6 +61,25 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <hr class="my-4">
+            <p class="text-uppercase text-muted small fw-bold text-center mb-3" style="letter-spacing:0.05em;">Personal Details</p>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" required>
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                <label class="form-check-label small" for="agreeTerms">I agree to the OJT Program's Data Privacy &amp; Terms of Use.</label>
             </div>
 
             <button type="submit" class="btn btn-azure w-100">Create Account</button>
@@ -115,29 +116,21 @@ function toggleEyeVisibility(inputId, buttonId) {
 }
 
 function toggleRoleFields() {
-    const type = document.getElementById('accountType').value;
-    const studentFields = document.getElementById('studentFields');
+    const type = document.querySelector('input[name="account_type"]:checked').value;
     const companyFields = document.getElementById('companyFields');
-    const studentInputs = studentFields.querySelectorAll('input');
     const companyInputs = companyFields.querySelectorAll('input');
     const hint = document.getElementById('roleHint');
 
     if (type === 'student') {
-        studentFields.classList.remove('d-none');
         companyFields.classList.add('d-none');
-        studentInputs.forEach(i => i.required = true);
         companyInputs.forEach(i => i.required = false);
-        hint.textContent = 'Intern accounts are activated immediately — no approval needed.';
+        hint.textContent = "Intern accounts are activated immediately. You'll finish your student profile after your first login.";
     } else if (type === 'coordinator') {
-        studentFields.classList.add('d-none');
         companyFields.classList.add('d-none');
-        studentInputs.forEach(i => i.required = false);
         companyInputs.forEach(i => i.required = false);
         hint.textContent = 'OJT Coordinator accounts require approval from the System Admin before you can log in.';
     } else {
-        studentFields.classList.add('d-none');
         companyFields.classList.remove('d-none');
-        studentInputs.forEach(i => i.required = false);
         companyInputs.forEach(i => i.required = true);
         hint.textContent = 'Office/Company accounts require approval from the System Admin before you can log in.';
     }
