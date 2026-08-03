@@ -1,11 +1,17 @@
 <ul class="nav flex-column">
 @php
-    $lockedForProfile = auth()->user()->isStudent()
+    $lockedForStudentProfile = auth()->user()->isStudent()
         && auth()->user()->student
         && !auth()->user()->student->isProfileComplete();
+    $lockedForCoordinatorProfile = auth()->user()->isCoordinator()
+        && auth()->user()->coordinatorProfile
+        && !auth()->user()->coordinatorProfile->isProfileComplete();
 @endphp
-@if($lockedForProfile)
+@if($lockedForStudentProfile)
     <li class="nav-item"><a class="nav-link active" href="{{ route('profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
+    <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
+@elseif($lockedForCoordinatorProfile)
+    <li class="nav-item"><a class="nav-link active" href="{{ route('coordinator-profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
     <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
 @else
     <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Company;
+use App\Models\CoordinatorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -56,6 +57,10 @@ class AuthController extends Controller
         // (Student ID, Program, Year Level, etc.) before they see the dashboard.
         if ($user->isStudent() && $user->student && !$user->student->isProfileComplete()) {
             return redirect()->route('profile.complete');
+        }
+
+        if ($user->isCoordinator() && $user->coordinatorProfile && !$user->coordinatorProfile->isProfileComplete()) {
+            return redirect()->route('coordinator-profile.complete');
         }
 
         return redirect()->intended(route('dashboard'));
@@ -111,7 +116,7 @@ class AuthController extends Controller
         }
 
         if ($validated['account_type'] === 'coordinator') {
-            User::create([
+            $user = User::create([
                 'name' => $fullName,
                 'username' => $validated['username'],
                 'email' => $validated['email'],
@@ -119,6 +124,8 @@ class AuthController extends Controller
                 'role' => 'coordinator',
                 'status' => 'pending',
             ]);
+
+            CoordinatorProfile::create(['user_id' => $user->id]);
 
             return redirect()->route('login')->with(
                 'success',

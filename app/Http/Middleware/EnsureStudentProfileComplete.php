@@ -9,8 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureStudentProfileComplete
 {
     /**
-     * If a logged-in Intern hasn't finished their profile (Student ID, Program,
-     * Year Level), lock them to the "Complete Your Profile" page — they can't
+     * If a logged-in Intern or OJT Coordinator hasn't finished their profile,
+     * lock them to their respective "Complete Your Profile" page — they can't
      * navigate anywhere else in the app until it's saved.
      */
     public function handle(Request $request, Closure $next): Response
@@ -25,6 +25,16 @@ class EnsureStudentProfileComplete
             && !$request->routeIs('profile.complete', 'profile.complete.store', 'logout')
         ) {
             return redirect()->route('profile.complete');
+        }
+
+        if (
+            $user
+            && $user->isCoordinator()
+            && $user->coordinatorProfile
+            && !$user->coordinatorProfile->isProfileComplete()
+            && !$request->routeIs('coordinator-profile.complete', 'coordinator-profile.complete.store', 'logout')
+        ) {
+            return redirect()->route('coordinator-profile.complete');
         }
 
         return $next($request);

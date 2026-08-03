@@ -32,6 +32,11 @@ class User extends Authenticatable
         return $this->hasOne(Student::class);
     }
 
+    public function coordinatorProfile()
+    {
+        return $this->hasOne(CoordinatorProfile::class);
+    }
+
     public function studentsAdvised()
     {
         return $this->hasMany(Student::class, 'coordinator_id');

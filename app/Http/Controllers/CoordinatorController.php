@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\CoordinatorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -31,12 +32,14 @@ class CoordinatorController extends Controller
             'password' => ['required', 'string', 'min:6'],
         ]);
 
-        User::create([
+        $coordinator = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'coordinator',
         ]);
+
+        CoordinatorProfile::create(['user_id' => $coordinator->id]);
 
         return redirect()->route('coordinators.index')->with('success', 'OJT Coordinator added successfully.');
     }

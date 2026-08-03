@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentProfileController;
+use App\Http\Controllers\CoordinatorProfileController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CoordinatorController;
 use App\Http\Controllers\PendingApprovalController;
@@ -34,6 +35,10 @@ Route::middleware('guest')->group(function () {
     // Google OAuth — {type} is 'student' or 'coordinator', picked from the login page buttons
     Route::get('/auth/google/{type}/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
+
+    // Confirmation step before creating a brand-new Coordinator account via Google
+    Route::get('/auth/google/coordinator/confirm', [GoogleAuthController::class, 'showCoordinatorConfirm'])->name('google.coordinator.confirm');
+    Route::post('/auth/google/coordinator/confirm', [GoogleAuthController::class, 'confirmCoordinator'])->name('google.coordinator.confirm.store');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -45,6 +50,10 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     // Intern profile completion (Student ID, Program, Year Level, etc.)
     Route::get('/profile/complete', [StudentProfileController::class, 'show'])->name('profile.complete');
     Route::post('/profile/complete', [StudentProfileController::class, 'store'])->name('profile.complete.store');
+
+    // OJT Coordinator profile completion (Employee ID, Department, Designation, etc.)
+    Route::get('/coordinator-profile/complete', [CoordinatorProfileController::class, 'show'])->name('coordinator-profile.complete');
+    Route::post('/coordinator-profile/complete', [CoordinatorProfileController::class, 'store'])->name('coordinator-profile.complete.store');
 
     // Admin & Coordinator only
     Route::middleware('role:admin,coordinator')->group(function () {
