@@ -48,15 +48,17 @@
             position: relative;
             z-index: 2;
             width: 100%;
-            max-width: 460px;
+            max-width: 760px;
         }
         .auth-card {
             background: rgba(255, 255, 255, 0.97);
             border-radius: 16px;
             box-shadow: 0 20px 45px rgba(3, 25, 51, 0.35);
             border: none;
+            max-width: 460px;
+            margin: 0 auto;
         }
-        .auth-card.wide { max-width: 620px; }
+        .auth-card.wide { max-width: 760px; }
         .auth-brand-icon {
             width: 56px;
             height: 56px;

@@ -42,12 +42,12 @@
         <a href="{{ route('google.redirect', 'student') }}" class="btn btn-google w-100 mb-2">
             <i class="bi bi-google"></i> Sign in with Google (Student)
         </a>
-        <a href="{{ route('google.redirect', 'coordinator') }}" class="btn btn-google w-100">
-            <i class="bi bi-google"></i> Sign in with Google (Coordinator)
+        <a href="{{ route('google.redirect', 'non_student') }}" class="btn btn-google w-100">
+            <i class="bi bi-google"></i> Sign in with Google (Non-Student)
         </a>
 
         <p class="text-center mt-4 mb-0">
-            No account? <a href="{{ route('register') }}">Register as Student</a>
+            No account yet? <a href="{{ route('register') }}">Sign Up</a>
         </p>
     </div>
 </div>

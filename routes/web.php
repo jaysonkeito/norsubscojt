@@ -26,19 +26,24 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
+    // Account Completion (Non-Student only) — Step 2 of registration, where
+    // Designation and any conditional Office/Company fields are collected.
+    Route::get('/account-completion', [AuthController::class, 'showAccountCompletion'])->name('account-completion.show');
+    Route::post('/account-completion', [AuthController::class, 'storeAccountCompletion'])->name('account-completion.store');
+
     // Forgot / reset password
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
-    // Google OAuth — {type} is 'student' or 'coordinator', picked from the login page buttons
+    // Google OAuth — {type} is 'student' or 'non_student', picked from the login page buttons
     Route::get('/auth/google/{type}/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
 
-    // Confirmation step before creating a brand-new Coordinator account via Google
-    Route::get('/auth/google/coordinator/confirm', [GoogleAuthController::class, 'showCoordinatorConfirm'])->name('google.coordinator.confirm');
-    Route::post('/auth/google/coordinator/confirm', [GoogleAuthController::class, 'confirmCoordinator'])->name('google.coordinator.confirm.store');
+    // Onboarding for a brand-new Non-Student Google sign-in (pick Designation, etc.)
+    Route::get('/auth/google/onboarding', [GoogleAuthController::class, 'showOnboarding'])->name('google.onboarding');
+    Route::post('/auth/google/onboarding', [GoogleAuthController::class, 'storeOnboarding'])->name('google.onboarding.store');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -55,8 +60,8 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/coordinator-profile/complete', [CoordinatorProfileController::class, 'show'])->name('coordinator-profile.complete');
     Route::post('/coordinator-profile/complete', [CoordinatorProfileController::class, 'store'])->name('coordinator-profile.complete.store');
 
-    // Admin & Coordinator only
-    Route::middleware('role:admin,coordinator')->group(function () {
+    // Admin, Coordinator, and Dean (oversight role)
+    Route::middleware('role:admin,coordinator,dean')->group(function () {
         Route::resource('students', StudentController::class);
         Route::resource('companies', CompanyController::class)->except(['show']);
         Route::resource('evaluations', EvaluationController::class)->only(['index', 'create', 'store', 'destroy']);
@@ -74,14 +79,19 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
         Route::delete('/time-logs/{timeLog}', [TimeLogController::class, 'destroy'])->name('timelogs.destroy');
     });
 
-    // Admin only
+    // Admin only — direct Coordinator account management (not approval, just CRUD)
     Route::middleware('role:admin')->group(function () {
         Route::resource('coordinators', CoordinatorController::class)->except(['show']);
+        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    });
+
+    // Admin and Dean — Pending Approvals (the controller itself scopes what
+    // a Dean can see/act on vs. what only Admin can)
+    Route::middleware('role:admin,dean')->group(function () {
         Route::get('/pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals.index');
         Route::patch('/pending-approvals/{pendingApproval}/approve', [PendingApprovalController::class, 'approve'])->name('pending-approvals.approve');
         Route::delete('/pending-approvals/{pendingApproval}/reject', [PendingApprovalController::class, 'reject'])->name('pending-approvals.reject');
-        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
-        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     });
 
     // Shared across all authenticated roles

@@ -12,7 +12,8 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'username', 'password', 'role', 'status', 'company_id',
+        'name', 'email', 'username', 'password', 'role', 'status',
+        'company_id', 'job_role', 'job_role_other',
     ];
 
     protected $hidden = [
@@ -67,6 +68,11 @@ class User extends Authenticatable
         return $this->role === 'company';
     }
 
+    public function isDean(): bool
+    {
+        return $this->role === 'dean';
+    }
+
     public function isPending(): bool
     {
         return $this->status === 'pending';
@@ -75,5 +81,24 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Approval hierarchy:
+     * - Admin can approve/reject anyone (Dean, Coordinator, Company).
+     * - Dean can approve/reject Coordinator and Company accounts only —
+     *   not other Dean accounts (those are Admin's call).
+     */
+    public function canApprove(User $target): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if ($this->isDean()) {
+            return in_array($target->role, ['coordinator', 'company']);
+        }
+
+        return false;
     }
 }

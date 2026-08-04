@@ -2,7 +2,10 @@
 @section('title', 'Pending Approvals')
 @section('content')
 <h3 class="mb-4">Pending Approvals</h3>
-<p class="text-muted">OJT Coordinator and Office/Company self-registrations wait here until you approve or reject them. Student accounts don't require approval and can log in immediately.</p>
+<p class="text-muted">Dean, OJT Coordinator, and Office/Company self-registrations wait here until approved or rejected. Student accounts don't require approval and can log in immediately.</p>
+@if(auth()->user()->isDean())
+<p class="text-muted small">As Dean, you can approve/reject OJT Coordinator and Office/Company requests. Dean account requests are approved by the System Admin.</p>
+@endif
 
 <div class="card p-3">
     <div class="table-responsive">
@@ -13,7 +16,7 @@
             <tr>
                 <td>{{ $u->name }}</td>
                 <td>{{ $u->email }}</td>
-                <td><span class="badge bg-secondary">{{ $u->role === 'coordinator' ? 'OJT Coordinator' : 'Office/Company' }}</span></td>
+                <td><span class="badge bg-secondary">{{ ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$u->role] ?? ucfirst($u->role) }}</span></td>
                 <td>{{ $u->company->name ?? '—' }}</td>
                 <td>{{ $u->created_at->format('M d, Y g:i A') }}</td>
                 <td>

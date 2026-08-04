@@ -10,18 +10,17 @@
         <form method="POST" action="{{ route('register') }}">
             @csrf
 
-            <label class="form-label d-block text-center mb-2">I am registering as</label>
-            <div class="btn-group w-100 mb-2 role-toggle" role="group">
-                <input type="radio" class="btn-check" name="account_type" id="typeStudent" value="student" autocomplete="off" {{ old('account_type', 'student') === 'student' ? 'checked' : '' }} onchange="toggleRoleFields()">
-                <label class="btn btn-outline-azure" for="typeStudent">Intern</label>
+            <label class="form-label d-block text-center mb-2">I am a</label>
+            <div class="btn-group w-100 mb-4 role-toggle" role="group">
+                <input type="radio" class="btn-check" name="account_type" id="typeStudent" value="student" autocomplete="off" {{ old('account_type', 'student') === 'student' ? 'checked' : '' }}>
+                <label class="btn btn-outline-azure" for="typeStudent">Student</label>
 
-                <input type="radio" class="btn-check" name="account_type" id="typeCoordinator" value="coordinator" autocomplete="off" {{ old('account_type') === 'coordinator' ? 'checked' : '' }} onchange="toggleRoleFields()">
-                <label class="btn btn-outline-azure" for="typeCoordinator">OJT Coordinator</label>
-
-                <input type="radio" class="btn-check" name="account_type" id="typeCompany" value="company" autocomplete="off" {{ old('account_type') === 'company' ? 'checked' : '' }} onchange="toggleRoleFields()">
-                <label class="btn btn-outline-azure" for="typeCompany">Office/Company</label>
+                <input type="radio" class="btn-check" name="account_type" id="typeNonStudent" value="non_student" autocomplete="off" {{ old('account_type') === 'non_student' ? 'checked' : '' }}>
+                <label class="btn btn-outline-azure" for="typeNonStudent">Non-Student</label>
             </div>
-            <p class="text-muted small text-center mb-4" id="roleHint">Intern accounts are activated immediately. You'll finish your student profile after your first login.</p>
+            <p class="text-muted small text-center mb-4">
+                Non-Student? You'll pick your specific role (Dean / OJT Coordinator / Office-Company) on the next screen.
+            </p>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -31,14 +30,6 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Email</label>
                     <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
-                </div>
-            </div>
-
-            {{-- Office/Company-only field --}}
-            <div id="companyFields" class="row d-none">
-                <div class="col-12 mb-3">
-                    <label class="form-label">Office/Company Name</label>
-                    <input type="text" name="company_name" class="form-control" value="{{ old('company_name') }}">
                 </div>
             </div>
 
@@ -53,7 +44,7 @@
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Verify Password</label>
+                    <label class="form-label">Confirm Password</label>
                     <div class="password-input-group">
                         <input type="password" name="password_confirmation" id="regPasswordConfirm" class="form-control" required oninput="toggleEyeVisibility('regPasswordConfirm', 'regConfirmEyeBtn')">
                         <button class="btn password-toggle-btn eye-btn-hidden" type="button" id="regConfirmEyeBtn" onclick="togglePassword('regPasswordConfirm', 'regPasswordConfirmIcon')">
@@ -82,7 +73,7 @@
                 <label class="form-check-label small" for="agreeTerms">I agree to the OJT Program's Data Privacy &amp; Terms of Use.</label>
             </div>
 
-            <button type="submit" class="btn btn-azure w-100">Create Account</button>
+            <button type="submit" class="btn btn-azure w-100">Continue</button>
         </form>
         <p class="text-center mt-3 mb-0">
             Already have an account? <a href="{{ route('login') }}">Sign in</a>
@@ -114,28 +105,5 @@ function toggleEyeVisibility(inputId, buttonId) {
         button.classList.add('eye-btn-hidden');
     }
 }
-
-function toggleRoleFields() {
-    const type = document.querySelector('input[name="account_type"]:checked').value;
-    const companyFields = document.getElementById('companyFields');
-    const companyInputs = companyFields.querySelectorAll('input');
-    const hint = document.getElementById('roleHint');
-
-    if (type === 'student') {
-        companyFields.classList.add('d-none');
-        companyInputs.forEach(i => i.required = false);
-        hint.textContent = "Intern accounts are activated immediately. You'll finish your student profile after your first login.";
-    } else if (type === 'coordinator') {
-        companyFields.classList.add('d-none');
-        companyInputs.forEach(i => i.required = false);
-        hint.textContent = 'OJT Coordinator accounts require approval from the System Admin before you can log in.';
-    } else {
-        companyFields.classList.remove('d-none');
-        companyInputs.forEach(i => i.required = true);
-        hint.textContent = 'Office/Company accounts require approval from the System Admin before you can log in.';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', toggleRoleFields);
 </script>
 @endsection

@@ -26,6 +26,19 @@ class DashboardController extends Controller
             return view('dashboard.admin', $data);
         }
 
+        if ($user->isDean()) {
+            $data = [
+                'totalStudents' => Student::count(),
+                'deployedCount' => Student::where('status', 'deployed')->count(),
+                'completedCount' => Student::where('status', 'completed')->count(),
+                'totalCompanies' => Company::count(),
+                'totalCoordinators' => User::where('role', 'coordinator')->count(),
+                'pendingApprovals' => User::where('status', 'pending')->whereIn('role', ['coordinator', 'company'])->count(),
+                'announcements' => Announcement::latest()->take(5)->get(),
+            ];
+            return view('dashboard.dean', $data);
+        }
+
         if ($user->isCoordinator()) {
             $students = Student::where('coordinator_id', $user->id)->with('company')->get();
             $data = [
