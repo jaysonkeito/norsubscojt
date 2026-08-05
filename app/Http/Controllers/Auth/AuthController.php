@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\Company;
 use App\Models\CoordinatorProfile;
+use App\Models\CompanyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -84,6 +85,10 @@ class AuthController extends Controller
 
         if ($user->isCoordinator() && $user->coordinatorProfile && !$user->coordinatorProfile->isProfileComplete()) {
             return redirect()->route('coordinator-profile.complete');
+        }
+
+        if ($user->isCompany() && $user->companyProfile && !$user->companyProfile->isProfileComplete()) {
+            return redirect()->route('company-profile.complete');
         }
 
         // Admin, Dean, and Company (and any Coordinator/Student already
@@ -223,10 +228,7 @@ class AuthController extends Controller
                 ? 'NORSU-BSC ' . trim($designation['office_name'])
                 : trim($designation['company_name']);
 
-            $company = Company::firstOrCreate(
-                ['name' => $companyName],
-                ['affiliation_type' => $affiliationType, 'moa_status' => 'pending']
-            );
+            $company = $this->findOrCreateCompany($companyName, $affiliationType);
 
             $userData['company_id'] = $company->id;
             $userData['job_role'] = $designation['job_role'];
@@ -239,6 +241,10 @@ class AuthController extends Controller
             CoordinatorProfile::create(['user_id' => $user->id]);
         }
 
+        if ($role === 'company') {
+            CompanyProfile::create(['user_id' => $user->id]);
+        }
+
         $approver = $role === 'dean' ? 'the System Admin' : 'the Dean';
         $roleLabel = ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role];
 
@@ -246,6 +252,26 @@ class AuthController extends Controller
             'success',
             "Your {$roleLabel} account has been submitted and is pending approval from {$approver}."
         );
+    }
+
+    /**
+     * Matches an existing Company by name case-insensitively (so "MIS
+     * OFFICE" and "Mis Office" reuse the same record instead of creating
+     * near-duplicates), or creates a new one using the name exactly as typed.
+     */
+    private function findOrCreateCompany(string $name, string $affiliationType): Company
+    {
+        $existing = Company::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return Company::create([
+            'name' => $name,
+            'affiliation_type' => $affiliationType,
+            'moa_status' => 'pending',
+        ]);
     }
 
     public function logout(Request $request)

@@ -38,6 +38,11 @@ class User extends Authenticatable
         return $this->hasOne(CoordinatorProfile::class);
     }
 
+    public function companyProfile()
+    {
+        return $this->hasOne(CompanyProfile::class);
+    }
+
     public function studentsAdvised()
     {
         return $this->hasMany(Student::class, 'coordinator_id');

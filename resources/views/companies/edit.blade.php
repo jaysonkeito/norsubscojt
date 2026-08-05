@@ -6,6 +6,14 @@
     <form method="POST" action="{{ route('companies.update', $company) }}">
         @csrf @method('PUT')
         <div class="mb-3"><label class="form-label">Name</label><input type="text" name="name" class="form-control" value="{{ $company->name }}" required></div>
+        <div class="mb-3">
+            <label class="form-label">Affiliation Type</label>
+            <select name="affiliation_type" class="form-select">
+                <option value="">— Not specified —</option>
+                <option value="inside_campus" {{ $company->affiliation_type === 'inside_campus' ? 'selected' : '' }}>Inside Campus (NORSU-BSC Office)</option>
+                <option value="outside_campus" {{ $company->affiliation_type === 'outside_campus' ? 'selected' : '' }}>Outside Campus</option>
+            </select>
+        </div>
         <div class="mb-3"><label class="form-label">Address</label><input type="text" name="address" class="form-control" value="{{ $company->address }}"></div>
         <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label">Contact Person</label><input type="text" name="contact_person" class="form-control" value="{{ $company->contact_person }}"></div>

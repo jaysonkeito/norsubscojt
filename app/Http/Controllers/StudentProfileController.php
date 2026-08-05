@@ -98,7 +98,7 @@ class StudentProfileController extends Controller
         ])->toArray();
 
         if ($request->hasFile('photo')) {
-            $studentData['photo_path'] = $request->file('photo')->store('student-photos', 'public');
+            $studentData['photo_path'] = $request->file('photo')->store('student-photos', 'private');
         }
 
         $student->update($studentData);

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AccountApprovedMail;
+use App\Mail\AccountRejectedMail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class PendingApprovalController extends Controller
 {
@@ -36,6 +39,8 @@ class PendingApprovalController extends Controller
             $pendingApproval->company->update(['moa_status' => 'active']);
         }
 
+        $this->sendApprovalEmail($pendingApproval);
+
         return redirect()->route('pending-approvals.index')->with(
             'success',
             "{$pendingApproval->name}'s account has been approved and can now log in."
@@ -47,6 +52,8 @@ class PendingApprovalController extends Controller
         abort_unless($request->user()->canApprove($pendingApproval), 403);
 
         $name = $pendingApproval->name;
+        $email = $pendingApproval->email;
+        $roleLabel = $this->roleLabel($pendingApproval->role);
         $companyToCheck = $pendingApproval->role === 'company' ? $pendingApproval->company : null;
 
         $pendingApproval->delete();
@@ -57,6 +64,36 @@ class PendingApprovalController extends Controller
             $companyToCheck->delete();
         }
 
+        $this->sendRejectionEmail($email, $name, $roleLabel);
+
         return redirect()->route('pending-approvals.index')->with('success', "{$name}'s registration was rejected and removed.");
+    }
+
+    private function roleLabel(string $role): string
+    {
+        return ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role] ?? ucfirst($role);
+    }
+
+    /**
+     * Email sends are wrapped in try/catch so a mail-server hiccup never
+     * blocks the actual approval/rejection action from completing — the
+     * account status change always succeeds even if the notification fails.
+     */
+    private function sendApprovalEmail(User $user): void
+    {
+        try {
+            Mail::to($user->email)->send(new AccountApprovedMail($user->name, $this->roleLabel($user->role)));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    private function sendRejectionEmail(string $email, string $name, string $roleLabel): void
+    {
+        try {
+            Mail::to($email)->send(new AccountRejectedMail($name, $roleLabel));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

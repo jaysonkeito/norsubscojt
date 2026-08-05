@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\CoordinatorProfileController;
+use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CoordinatorController;
 use App\Http\Controllers\PendingApprovalController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -22,9 +24,9 @@ Route::get('/', fn () => redirect()->route('login'));
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 
     // Account Completion (Non-Student only) — Step 2 of registration, where
     // Designation and any conditional Office/Company fields are collected.
@@ -33,7 +35,7 @@ Route::middleware('guest')->group(function () {
 
     // Forgot / reset password
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:3,1');
     Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
@@ -52,6 +54,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Privately-stored uploads — each route checks the requester's
+    // permission in FileController before returning anything.
+    Route::get('/files/students/{student}/photo', [FileController::class, 'studentPhoto'])->name('files.student-photo');
+    Route::get('/files/coordinators/{coordinator}/photo', [FileController::class, 'coordinatorPhoto'])->name('files.coordinator-photo');
+    Route::get('/files/coordinators/{coordinator}/resume', [FileController::class, 'coordinatorResume'])->name('files.coordinator-resume');
+    Route::get('/files/company-reps/{companyRep}/photo', [FileController::class, 'companyPhoto'])->name('files.company-photo');
+    Route::get('/files/requirements/{requirement}/file', [FileController::class, 'requirementFile'])->name('files.requirement-file');
+
     // Intern profile completion (Student ID, Program, Year Level, etc.)
     Route::get('/profile/complete', [StudentProfileController::class, 'show'])->name('profile.complete');
     Route::post('/profile/complete', [StudentProfileController::class, 'store'])->name('profile.complete.store');
@@ -60,13 +70,22 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/coordinator-profile/complete', [CoordinatorProfileController::class, 'show'])->name('coordinator-profile.complete');
     Route::post('/coordinator-profile/complete', [CoordinatorProfileController::class, 'store'])->name('coordinator-profile.complete.store');
 
+    // Company rep profile completion (Mobile Number, etc.)
+    Route::get('/company-profile/complete', [CompanyProfileController::class, 'show'])->name('company-profile.complete');
+    Route::post('/company-profile/complete', [CompanyProfileController::class, 'store'])->name('company-profile.complete.store');
+
     // Admin, Coordinator, and Dean (oversight role)
     Route::middleware('role:admin,coordinator,dean')->group(function () {
         Route::resource('students', StudentController::class);
         Route::resource('companies', CompanyController::class)->except(['show']);
-        Route::resource('evaluations', EvaluationController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::patch('/requirements/{requirement}/status', [RequirementController::class, 'updateStatus'])->name('requirements.status');
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    });
+
+    // Evaluations: Admin/Dean see everyone; Coordinator/Company are scoped to
+    // their own interns (enforced in the controller, not just hidden here)
+    Route::middleware('role:admin,coordinator,dean,company')->group(function () {
+        Route::resource('evaluations', EvaluationController::class)->only(['index', 'create', 'store', 'destroy']);
     });
 
     // Admin, Coordinator, and Company reps record and approve time logs on behalf

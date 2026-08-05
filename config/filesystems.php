@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        // Not web-accessible directly (no symlink into public/). Files here
+        // are only ever served through FileController, which checks the
+        // requester's permission before returning anything.
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

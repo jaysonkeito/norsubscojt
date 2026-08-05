@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Models\CompanyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,6 +25,7 @@ class CompanyController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'affiliation_type' => ['nullable', 'in:inside_campus,outside_campus'],
             'address' => ['nullable', 'string'],
             'contact_person' => ['nullable', 'string'],
             'contact_number' => ['nullable', 'string'],
@@ -36,6 +38,7 @@ class CompanyController extends Controller
 
         $company = Company::create([
             'name' => $validated['name'],
+            'affiliation_type' => $validated['affiliation_type'] ?? null,
             'address' => $validated['address'] ?? null,
             'contact_person' => $validated['contact_person'] ?? null,
             'contact_number' => $validated['contact_number'] ?? null,
@@ -48,13 +51,14 @@ class CompanyController extends Controller
 
         // Optionally create a login account for the Host Company representative
         if (!empty($validated['login_email']) && !empty($validated['login_password'])) {
-            User::create([
+            $user = User::create([
                 'name' => $validated['contact_person'] ?: $validated['name'],
                 'email' => $validated['login_email'],
                 'password' => Hash::make($validated['login_password']),
                 'role' => 'company',
                 'company_id' => $company->id,
             ]);
+            CompanyProfile::create(['user_id' => $user->id]);
             $message .= ' A login account was also created for this Host Company.';
         }
 
@@ -70,6 +74,7 @@ class CompanyController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'affiliation_type' => ['nullable', 'in:inside_campus,outside_campus'],
             'address' => ['nullable', 'string'],
             'contact_person' => ['nullable', 'string'],
             'contact_number' => ['nullable', 'string'],

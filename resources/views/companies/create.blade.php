@@ -6,6 +6,14 @@
     <form method="POST" action="{{ route('companies.store') }}">
         @csrf
         <div class="mb-3"><label class="form-label">Name</label><input type="text" name="name" class="form-control" required></div>
+        <div class="mb-3">
+            <label class="form-label">Affiliation Type</label>
+            <select name="affiliation_type" class="form-select">
+                <option value="">— Not specified —</option>
+                <option value="inside_campus">Inside Campus (NORSU-BSC Office)</option>
+                <option value="outside_campus">Outside Campus</option>
+            </select>
+        </div>
         <div class="mb-3"><label class="form-label">Address</label><input type="text" name="address" class="form-control"></div>
         <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label">Contact Person</label><input type="text" name="contact_person" class="form-control"></div>

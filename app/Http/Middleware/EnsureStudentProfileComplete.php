@@ -37,6 +37,16 @@ class EnsureStudentProfileComplete
             return redirect()->route('coordinator-profile.complete');
         }
 
+        if (
+            $user
+            && $user->isCompany()
+            && $user->companyProfile
+            && !$user->companyProfile->isProfileComplete()
+            && !$request->routeIs('company-profile.complete', 'company-profile.complete.store', 'logout')
+        ) {
+            return redirect()->route('company-profile.complete');
+        }
+
         return $next($request);
     }
 }

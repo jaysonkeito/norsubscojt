@@ -81,10 +81,10 @@ class CoordinatorProfileController extends Controller
         ])->toArray();
 
         if ($request->hasFile('photo')) {
-            $profileData['photo_path'] = $request->file('photo')->store('coordinator-photos', 'public');
+            $profileData['photo_path'] = $request->file('photo')->store('coordinator-photos', 'private');
         }
         if ($request->hasFile('resume')) {
-            $profileData['resume_path'] = $request->file('resume')->store('coordinator-resumes', 'public');
+            $profileData['resume_path'] = $request->file('resume')->store('coordinator-resumes', 'private');
         }
 
         $profile->update($profileData);

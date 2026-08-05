@@ -34,7 +34,7 @@ class RequirementController extends Controller
 
         $path = null;
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('requirements', 'public');
+            $path = $request->file('file')->store('requirements', 'private');
         }
 
         Requirement::create([
