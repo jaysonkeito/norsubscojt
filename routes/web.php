@@ -51,6 +51,10 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/account-completion', [AuthController::class, 'showAccountCompletion'])->name('account-completion.show');
     Route::post('/account-completion', [AuthController::class, 'storeAccountCompletion'])->name('account-completion.store');
 
+    // Pending-approval status page — shown to a logged-in user whose
+    // Designation is chosen but who isn't approved yet (status='pending').
+    Route::get('/account-pending', [AuthController::class, 'showAccountPending'])->name('account-pending.show');
+
     // Privately-stored uploads — each route checks the requester's
     // permission in FileController before returning anything.
     Route::get('/files/students/{student}/photo', [FileController::class, 'studentPhoto'])->name('files.student-photo');

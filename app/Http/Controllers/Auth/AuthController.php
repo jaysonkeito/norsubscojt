@@ -59,12 +59,6 @@ class AuthController extends Controller
             ])->onlyInput('login');
         }
 
-        if ($user->isPending()) {
-            return back()->withErrors([
-                'login' => 'Your account is still pending approval. Please check back later.',
-            ])->onlyInput('login');
-        }
-
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
@@ -74,12 +68,18 @@ class AuthController extends Controller
     /**
      * Role-based redirection after any successful authentication (password
      * login or Google) — sends each role straight to its own dashboard, or
-     * to a profile-completion step first if one is required and not yet done.
+     * to whichever intermediate screen applies: Account Completion (still
+     * unassigned), the pending-approval status page (designation picked,
+     * awaiting Dean/Admin), or a profile-completion step.
      */
     public function postLoginRedirect(User $user)
     {
         if ($user->isUnassigned()) {
             return redirect()->route('account-completion.show');
+        }
+
+        if ($user->isPending()) {
+            return redirect()->route('account-pending.show');
         }
 
         if ($user->isStudent() && $user->student && !$user->student->isProfileComplete()) {
@@ -163,6 +163,15 @@ class AuthController extends Controller
         ]);
     }
 
+    public function showAccountPending(Request $request)
+    {
+        if (!$request->user()->isPending()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('profile.account-pending', ['user' => $request->user()]);
+    }
+
     public function storeAccountCompletion(Request $request)
     {
         $user = $request->user();
@@ -227,15 +236,11 @@ class AuthController extends Controller
             CompanyProfile::create(['user_id' => $user->id]);
         }
 
-        // They're 'pending' now — log the current session out immediately.
-        Auth::logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
+        // They're 'pending' now — stay logged in, land on the pending-status page.
         $approver = $role === 'dean' ? 'the System Admin' : 'the Dean';
         $roleLabel = ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role];
 
-        return redirect()->route('login')->with(
+        return redirect()->route('account-pending.show')->with(
             'success',
             "Your {$roleLabel} account has been submitted and is pending approval from {$approver}."
         );

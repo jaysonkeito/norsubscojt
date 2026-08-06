@@ -53,12 +53,6 @@ class GoogleAuthController extends Controller
             }
         }
 
-        if ($user->isPending()) {
-            return redirect()->route('login')->withErrors([
-                'login' => 'Your account is still pending approval. Please check back later.',
-            ]);
-        }
-
         Auth::login($user);
 
         return (new AuthController())->postLoginRedirect($user);

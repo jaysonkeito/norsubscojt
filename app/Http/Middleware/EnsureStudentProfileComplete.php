@@ -27,6 +27,14 @@ class EnsureStudentProfileComplete
 
         if (
             $user
+            && $user->isPending()
+            && !$request->routeIs('account-pending.show', 'logout')
+        ) {
+            return redirect()->route('account-pending.show');
+        }
+
+        if (
+            $user
             && $user->isStudent()
             && $user->student
             && !$user->student->isProfileComplete()

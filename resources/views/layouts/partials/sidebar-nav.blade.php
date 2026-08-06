@@ -14,6 +14,9 @@
 @if($lockedForUnassigned)
     <li class="nav-item"><a class="nav-link active" href="{{ route('account-completion.show') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Account</a></li>
     <li class="px-3 pt-2"><small class="text-white-50">Pick your role to unlock the rest of the menu.</small></li>
+@elseif(auth()->user()->isPending())
+    <li class="nav-item"><a class="nav-link active" href="{{ route('account-pending.show') }}"><i class="bi bi-hourglass-split"></i> Pending Approval</a></li>
+    <li class="px-3 pt-2"><small class="text-white-50">Waiting for approval — check back later.</small></li>
 @elseif($lockedForStudentProfile)
     <li class="nav-item"><a class="nav-link active" href="{{ route('profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
     <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
