@@ -7,24 +7,24 @@
         <h4 class="mb-1 text-center">@include('partials.clock-o')JT Tracker</h4>
         <p class="text-muted text-center mb-4">NORSU Bayawan-Sta. Catalina Campus</p>
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" autocomplete="off">
             @csrf
-            <div class="mb-3">
-                <label class="form-label">Email or Username</label>
-                <div class="icon-input-group">
-                    <input type="text" name="login" class="form-control" value="{{ old('login') }}" placeholder="Enter your Email or Username" required autofocus>
-                    <span class="icon-input-suffix"><i class="bi bi-person-circle"></i></span>
-                </div>
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Password</label>
-                <div class="password-input-group">
-                    <input type="password" name="password" id="loginPassword" class="form-control" placeholder="Enter your password" required oninput="toggleEyeVisibility('loginPassword', 'loginEyeBtn')">
-                    <button class="btn password-toggle-btn eye-btn-hidden" type="button" id="loginEyeBtn" onclick="togglePassword('loginPassword', 'loginPasswordIcon')">
-                        <i class="bi bi-eye" id="loginPasswordIcon"></i>
-                    </button>
-                </div>
-            </div>
+    <div class="mb-3">
+        <label class="form-label">Email or Username</label>
+        <div class="icon-input-group">
+            <input type="text" name="login" class="form-control" placeholder="Enter your Email or Username" required autofocus autocomplete="username">
+            <span class="icon-input-suffix"><i class="bi bi-person-circle"></i></span>
+        </div>
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Password</label>
+        <div class="password-input-group">
+            <input type="password" name="password" id="loginPassword" class="form-control" placeholder="Enter your password" required autocomplete="new-password" oninput="toggleEyeVisibility('loginPassword', 'loginEyeBtn')">
+            <button class="btn password-toggle-btn eye-btn-hidden" type="button" id="loginEyeBtn" onclick="togglePassword('loginPassword', 'loginPasswordIcon')">
+                <i class="bi bi-eye" id="loginPasswordIcon"></i>
+            </button>
+        </div>
+    </div>
             <div class="mb-3">
                 <a href="{{ route('password.request') }}" class="small">Forgot password?</a>
             </div>

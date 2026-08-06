@@ -11,7 +11,6 @@ use App\Models\CompanyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules;
 
 class AuthController extends Controller
@@ -79,6 +78,10 @@ class AuthController extends Controller
      */
     public function postLoginRedirect(User $user)
     {
+        if ($user->isUnassigned()) {
+            return redirect()->route('account-completion.show');
+        }
+
         if ($user->isStudent() && $user->student && !$user->student->isProfileComplete()) {
             return redirect()->route('profile.complete');
         }
@@ -102,13 +105,16 @@ class AuthController extends Controller
     }
 
     /**
-     * STEP 1 of registration — account basics only. No Designation or
-     * Office/Company fields are collected here at all.
+     * Registration — account basics only, no Designation or Office/Company
+     * fields collected here.
      *
      * - Student: created active immediately, no approval needed.
-     * - Non-Student: nothing is created yet. The basics are stashed in the
-     *   session and the person is sent to a separate Account Completion
-     *   screen to pick their Designation first.
+     * - Non-Student: also created immediately, but with a transient
+     *   role = 'unassigned' and status = 'active' — this lets them log in
+     *   right away, at which point the profile-completion middleware locks
+     *   them to the Account Completion screen to pick their real
+     *   Designation. The account only becomes 'pending' (awaiting Dean/
+     *   Admin approval) once that's submitted.
      */
     public function register(Request $request)
     {
@@ -123,59 +129,44 @@ class AuthController extends Controller
 
         $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
 
-        if ($validated['account_type'] === 'student') {
-            $user = User::create([
-                'name' => $fullName,
-                'username' => $validated['username'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'student',
-                'status' => 'active',
-            ]);
-
-            Student::create(['user_id' => $user->id]);
-
-            return redirect()->route('login')->with(
-                'success',
-                'Account created! Please sign in to finish setting up your profile.'
-            );
-        }
-
-        // Non-Student — stash account basics, defer creation to Step 2.
-        $request->session()->put('pending_account_basics', [
+        $user = User::create([
             'name' => $fullName,
             'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => $validated['account_type'] === 'student' ? 'student' : 'unassigned',
+            'status' => 'active',
         ]);
 
-        return redirect()->route('account-completion.show');
+        if ($validated['account_type'] === 'student') {
+            Student::create(['user_id' => $user->id]);
+        }
+
+        return redirect()->route('login')->with(
+            'success',
+            'Account created! Please sign in to finish setting up your profile.'
+        );
     }
 
     /**
-     * STEP 2 of registration (Non-Student only) — "Account Completion."
-     * Shown right after Step 1, before the account exists at all. Requires
-     * the session stash from Step 1; if it's missing (e.g. direct URL
-     * visit, or the session expired), bounce back to the start.
+     * Account Completion — shown to any logged-in user whose role is still
+     * 'unassigned' (locked there by middleware). Lets them pick a
+     * Designation and, for Office/Company, the conditional fields.
      */
     public function showAccountCompletion(Request $request)
     {
-        $basics = $request->session()->get('pending_account_basics');
+        abort_unless($request->user()->isUnassigned(), 403);
 
-        if (!$basics) {
-            return redirect()->route('register');
-        }
-
-        return view('auth.account-completion', [
-            'basics' => $basics,
+        return view('profile.account-completion', [
+            'user' => $request->user(),
             'officeSuggestions' => self::insideCampusOfficeSuggestions(),
         ]);
     }
 
     public function storeAccountCompletion(Request $request)
     {
-        $basics = $request->session()->get('pending_account_basics');
-        abort_unless($basics, 403);
+        $user = $request->user();
+        abort_unless($user->isUnassigned(), 403);
 
         $rules = ['designation' => ['required', 'in:dean,coordinator,company']];
 
@@ -196,30 +187,21 @@ class AuthController extends Controller
 
         $designation = $request->validate($rules);
 
-        $request->session()->forget('pending_account_basics');
-
-        return $this->createNonStudentAccount($basics, $designation);
+        return $this->finalizeNonStudentAccount($user, $designation);
     }
 
     /**
-     * Shared by both entry points into "Account Completion" — the manual
-     * two-step registration above, and the Google non-student onboarding
-     * form in GoogleAuthController. $accountBasics has name/username/email/
-     * password (already hashed); $designation has the picked designation
-     * plus any conditional Office/Company fields.
+     * Applies the chosen Designation to an existing 'unassigned' account —
+     * updates its real role, sets up any related profile/company records,
+     * flips it to 'pending', and logs the person out (they'll log back in
+     * once approved). Shared by the manual Account Completion flow above
+     * and the Google non-student path in GoogleAuthController.
      */
-    public function createNonStudentAccount(array $accountBasics, array $designation)
+    public function finalizeNonStudentAccount(User $user, array $designation): \Illuminate\Http\RedirectResponse
     {
         $role = $designation['designation']; // 'dean' | 'coordinator' | 'company'
 
-        $userData = [
-            'name' => $accountBasics['name'],
-            'username' => $accountBasics['username'],
-            'email' => $accountBasics['email'],
-            'password' => $accountBasics['password'],
-            'role' => $role,
-            'status' => 'pending',
-        ];
+        $updateData = ['role' => $role, 'status' => 'pending'];
 
         if ($role === 'company') {
             $affiliationType = $designation['affiliation_type'];
@@ -230,12 +212,12 @@ class AuthController extends Controller
 
             $company = $this->findOrCreateCompany($companyName, $affiliationType);
 
-            $userData['company_id'] = $company->id;
-            $userData['job_role'] = $designation['job_role'];
-            $userData['job_role_other'] = $designation['job_role'] === 'Others' ? ($designation['job_role_other'] ?? null) : null;
+            $updateData['company_id'] = $company->id;
+            $updateData['job_role'] = $designation['job_role'];
+            $updateData['job_role_other'] = $designation['job_role'] === 'Others' ? ($designation['job_role_other'] ?? null) : null;
         }
 
-        $user = User::create($userData);
+        $user->update($updateData);
 
         if ($role === 'coordinator') {
             CoordinatorProfile::create(['user_id' => $user->id]);
@@ -244,6 +226,11 @@ class AuthController extends Controller
         if ($role === 'company') {
             CompanyProfile::create(['user_id' => $user->id]);
         }
+
+        // They're 'pending' now — log the current session out immediately.
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
 
         $approver = $role === 'dean' ? 'the System Admin' : 'the Dean';
         $roleLabel = ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role];

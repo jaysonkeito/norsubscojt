@@ -1,5 +1,6 @@
 <ul class="nav flex-column">
 @php
+    $lockedForUnassigned = auth()->user()->isUnassigned();
     $lockedForStudentProfile = auth()->user()->isStudent()
         && auth()->user()->student
         && !auth()->user()->student->isProfileComplete();
@@ -10,7 +11,10 @@
         && auth()->user()->companyProfile
         && !auth()->user()->companyProfile->isProfileComplete();
 @endphp
-@if($lockedForStudentProfile)
+@if($lockedForUnassigned)
+    <li class="nav-item"><a class="nav-link active" href="{{ route('account-completion.show') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Account</a></li>
+    <li class="px-3 pt-2"><small class="text-white-50">Pick your role to unlock the rest of the menu.</small></li>
+@elseif($lockedForStudentProfile)
     <li class="nav-item"><a class="nav-link active" href="{{ route('profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
     <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
 @elseif($lockedForCoordinatorProfile)
@@ -20,13 +24,13 @@
     <li class="nav-item"><a class="nav-link active" href="{{ route('company-profile.complete') }}"><i class="bi bi-person-lines-fill"></i> Complete Your Profile</a></li>
     <li class="px-3 pt-2"><small class="text-white-50">Finish your profile to unlock the rest of the menu.</small></li>
 @else
-    <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
     @if(auth()->user()->role === 'admin')
-    <li class="nav-item"><a class="nav-link" href="{{ route('coordinators.index') }}"><i class="bi bi-person-badge"></i> OJT Coordinators</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('coordinators.*') ? 'active' : '' }}" href="{{ route('coordinators.index') }}"><i class="bi bi-person-badge"></i> OJT Coordinators</a></li>
     @endif
     @if(in_array(auth()->user()->role, ['admin', 'dean']))
     <li class="nav-item">
-        <a class="nav-link d-flex align-items-center" href="{{ route('pending-approvals.index') }}">
+        <a class="nav-link d-flex align-items-center {{ request()->routeIs('pending-approvals.*') ? 'active' : '' }}" href="{{ route('pending-approvals.index') }}">
             <i class="bi bi-person-check"></i> <span class="ms-1">Pending Approvals</span>
             @php
                 $pendingQuery = \App\Models\User::where('status', 'pending');
@@ -42,15 +46,15 @@
     </li>
     @endif
     @if(in_array(auth()->user()->role, ['admin', 'coordinator', 'dean']))
-    <li class="nav-item"><a class="nav-link" href="{{ route('students.index') }}"><i class="bi bi-people-fill"></i> Interns</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ route('companies.index') }}"><i class="bi bi-building"></i> Offices/Companies</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ route('reports.index') }}"><i class="bi bi-graph-up"></i> Reports</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}"><i class="bi bi-people-fill"></i> Interns</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('companies.*') ? 'active' : '' }}" href="{{ route('companies.index') }}"><i class="bi bi-building"></i> Offices/Companies</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}"><i class="bi bi-graph-up"></i> Reports</a></li>
     @endif
     @if(in_array(auth()->user()->role, ['admin', 'coordinator', 'dean', 'company']))
-    <li class="nav-item"><a class="nav-link" href="{{ route('evaluations.index') }}"><i class="bi bi-clipboard-check"></i> Evaluations</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active' : '' }}" href="{{ route('evaluations.index') }}"><i class="bi bi-clipboard-check"></i> Evaluations</a></li>
     @endif
-    <li class="nav-item"><a class="nav-link" href="{{ route('timelogs.index') }}"><i class="bi bi-clock-history"></i> Time Logs (Attendance)</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ route('requirements.index') }}"><i class="bi bi-file-earmark-text"></i> Requirements</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ route('announcements.index') }}"><i class="bi bi-megaphone"></i> Announcements</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('timelogs.*') ? 'active' : '' }}" href="{{ route('timelogs.index') }}"><i class="bi bi-clock-history"></i> Time Logs (Attendance)</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('requirements.*') ? 'active' : '' }}" href="{{ route('requirements.index') }}"><i class="bi bi-file-earmark-text"></i> Requirements</a></li>
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('announcements.*') ? 'active' : '' }}" href="{{ route('announcements.index') }}"><i class="bi bi-megaphone"></i> Announcements</a></li>
 @endif
 </ul>

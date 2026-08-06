@@ -28,11 +28,6 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 
-    // Account Completion (Non-Student only) — Step 2 of registration, where
-    // Designation and any conditional Office/Company fields are collected.
-    Route::get('/account-completion', [AuthController::class, 'showAccountCompletion'])->name('account-completion.show');
-    Route::post('/account-completion', [AuthController::class, 'storeAccountCompletion'])->name('account-completion.store');
-
     // Forgot / reset password
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:3,1');
@@ -42,10 +37,6 @@ Route::middleware('guest')->group(function () {
     // Google OAuth — {type} is 'student' or 'non_student', picked from the login page buttons
     Route::get('/auth/google/{type}/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
-
-    // Onboarding for a brand-new Non-Student Google sign-in (pick Designation, etc.)
-    Route::get('/auth/google/onboarding', [GoogleAuthController::class, 'showOnboarding'])->name('google.onboarding');
-    Route::post('/auth/google/onboarding', [GoogleAuthController::class, 'storeOnboarding'])->name('google.onboarding.store');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -53,6 +44,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 // Authenticated routes
 Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Account Completion (Non-Student only) — shown to any logged-in user
+    // whose role is still 'unassigned', locked there by the profile.gate
+    // middleware until Designation is picked.
+    Route::get('/account-completion', [AuthController::class, 'showAccountCompletion'])->name('account-completion.show');
+    Route::post('/account-completion', [AuthController::class, 'storeAccountCompletion'])->name('account-completion.store');
 
     // Privately-stored uploads — each route checks the requester's
     // permission in FileController before returning anything.

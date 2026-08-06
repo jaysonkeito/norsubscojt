@@ -6,11 +6,27 @@
     <title>@yield('title', 'OJT Tracker') | NORSU Bayawan-Sta. Catalina</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy: #0F172A;
+            --electric-blue: #3B82F6;
+            --electric-blue-dark: #2563EB;
+            --border-soft: #E2E8F0;
+            --text-muted: #64748B;
+        }
         html, body {
             height: 100%;
             margin: 0;
         }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--navy);
+        }
+        h1, h2, h3, h4, h5, h6 { font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
+
         body.auth-body {
             min-height: 100vh;
             display: flex;
@@ -19,31 +35,30 @@
             padding: 2rem 1rem;
             position: relative;
             overflow-x: hidden;
-            /*background: linear-gradient(135deg, #062c52 0%, #0a4a8f 45%, #1f7fc9 75%, #6fb7ea 100%);*/
-            background: linear-gradient(rgba(6,44,82,0.75), rgba(10,74,143,0.65)), url('{{ asset('images/campus-bg.jpg') }}') center/cover no-repeat;
-            background-attachment: fixed;
+            background: #F8FAFC;
         }
-        /* Soft dotted texture overlay for depth, in place of a photo */
+        /* Faint dot-grid texture, subtle enough not to compete with the card */
         body.auth-body::before {
             content: "";
             position: absolute;
             inset: 0;
-            background-image: radial-gradient(rgba(255,255,255,0.10) 1.5px, transparent 1.5px);
-            background-size: 26px 26px;
+            background-image: radial-gradient(rgba(15,23,42,0.05) 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
             pointer-events: none;
         }
-        /* Campus skyline silhouette, authored as inline SVG (no external image dependency) */
-        .auth-skyline {
+        /* Soft electric-blue glow in the corner for depth without a photo */
+        body.auth-body::after {
+            content: "";
             position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 22vh;
-            min-height: 140px;
-            opacity: 0.35;
+            top: -120px;
+            right: -120px;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59,130,246,0.14) 0%, rgba(59,130,246,0) 70%);
             pointer-events: none;
         }
+
         .auth-card-wrap {
             position: relative;
             z-index: 2;
@@ -51,175 +66,108 @@
             max-width: 760px;
         }
         .auth-card {
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: 16px;
-            box-shadow: 0 20px 45px rgba(3, 25, 51, 0.35);
-            border: none;
+            background: #fff;
+            border-radius: 18px;
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.08);
             max-width: 460px;
             margin: 0 auto;
         }
         .auth-card.wide { max-width: 760px; }
         .auth-brand-icon {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             border-radius: 14px;
-            background: linear-gradient(135deg, #0a4a8f, #2d95d6);
+            background: var(--electric-blue);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 0.75rem auto;
-            box-shadow: 0 6px 16px rgba(10, 74, 143, 0.35);
+            margin: 0 auto 0.9rem auto;
         }
-        .auth-brand-icon i { color: #fff; font-size: 1.6rem; }
+        .auth-brand-icon i { color: #fff; font-size: 1.5rem; }
+        .btn { border-radius: 10px; font-weight: 500; }
         .btn-azure {
-            background-color: #0a5aa8;
-            border-color: #0a5aa8;
+            background-color: var(--electric-blue);
+            border-color: var(--electric-blue);
             color: #fff;
         }
         .btn-azure:hover, .btn-azure:focus {
-            background-color: #084a8a;
-            border-color: #084a8a;
+            background-color: var(--electric-blue-dark);
+            border-color: var(--electric-blue-dark);
             color: #fff;
         }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border-color: var(--border-soft);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.15);
+        }
 
-        /* Custom password field wrapper — one continuous border around
-           an input + toggle button, so it always reads as a single field
-           regardless of whether the eye icon is visible or hidden. */
         .password-input-group {
             display: flex;
             align-items: stretch;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
             background-color: #fff;
             overflow: hidden;
         }
         .password-input-group:focus-within {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.15);
         }
-        .password-input-group .form-control {
-            border: none;
-            box-shadow: none;
-            background-color: transparent;
-        }
-        .password-input-group .form-control:focus {
-            box-shadow: none;
-        }
-        .password-toggle-btn {
-            border: none;
-            background-color: transparent;
-            color: #6c757d;
-        }
-        .password-toggle-btn:hover,
-        .password-toggle-btn:focus {
-            background-color: transparent;
-            color: #495057;
-            box-shadow: none;
-        }
-        .eye-btn-hidden {
-            visibility: hidden;
-        }
+        .password-input-group .form-control { border: none; box-shadow: none; background-color: transparent; }
+        .password-input-group .form-control:focus { box-shadow: none; }
+        .password-toggle-btn { border: none; background-color: transparent; color: var(--text-muted); }
+        .password-toggle-btn:hover, .password-toggle-btn:focus { background-color: transparent; color: var(--navy); box-shadow: none; }
+        .eye-btn-hidden { visibility: hidden; }
 
-        /* Icon-suffix input (e.g. the Email/Student ID field on Login) */
-        .icon-input-group {
-            position: relative;
-        }
-        .icon-input-group .form-control {
-            padding-right: 2.5rem;
-        }
+        .icon-input-group { position: relative; }
+        .icon-input-group .form-control { padding-right: 2.5rem; }
         .icon-input-suffix {
             position: absolute;
             right: 0.75rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #adb5bd;
+            color: #94A3B8;
             pointer-events: none;
         }
 
-        /* "or" divider between password login and Google buttons */
-        .auth-divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: #adb5bd;
-            font-size: 0.85rem;
-        }
-        .auth-divider::before,
-        .auth-divider::after {
-            content: "";
-            flex: 1;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .auth-divider span {
-            padding: 0 0.75rem;
-        }
+        .auth-divider { display: flex; align-items: center; text-align: center; color: #94A3B8; font-size: 0.85rem; }
+        .auth-divider::before, .auth-divider::after { content: ""; flex: 1; border-bottom: 1px solid var(--border-soft); }
+        .auth-divider span { padding: 0 0.75rem; }
 
-        /* Google sign-in buttons */
         .btn-google {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             background-color: #fff;
-            border: 1px solid #dadce0;
-            color: #3c4043;
+            border: 1px solid var(--border-soft);
+            color: var(--navy);
             font-weight: 500;
         }
-        .btn-google:hover {
-            background-color: #f8f9fa;
-            color: #3c4043;
-            border-color: #dadce0;
-        }
-        .btn-google i {
-            color: #4285F4;
-        }
+        .btn-google:hover { background-color: #F8FAFC; color: var(--navy); border-color: var(--border-soft); }
+        .btn-google i { color: #4285F4; }
 
-        /* Segmented role toggle on Register (btn-check + label pattern) */
         .role-toggle .btn-outline-azure {
-            color: #0a5aa8;
-            border-color: #0a5aa8;
+            color: var(--electric-blue);
+            border-color: var(--border-soft);
             background-color: #fff;
         }
         .role-toggle .btn-check:checked + .btn-outline-azure {
-            background-color: #0a5aa8;
-            border-color: #0a5aa8;
+            background-color: var(--electric-blue);
+            border-color: var(--electric-blue);
             color: #fff;
         }
-        .auth-card a { color: #0a5aa8; text-decoration: none; font-weight: 500; }
-        .auth-card a:hover { text-decoration: underline; }
-        .clock-o {
-            width: 0.78em;
-            height: 0.78em;
-            display: inline-block;
-            vertical-align: -0.05em;
-            margin-right: 1px;
-            color: black;
-        }
+
+        .auth-card a { color: var(--electric-blue); text-decoration: none; font-weight: 500; }
+        .auth-card a:hover { text-decoration: underline; color: var(--electric-blue-dark); }
+        .clock-o { width: 0.78em; height: 0.78em; display: inline-block; vertical-align: -0.05em; margin-right: 1px; color: var(--navy); }
     </style>
 </head>
 <body class="auth-body">
-
-    <!--<svg class="auth-skyline" viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="120" width="60" height="80" fill="#ffffff"/>
-        <rect x="70" y="90" width="45" height="110" fill="#ffffff"/>
-        <rect x="125" y="140" width="70" height="60" fill="#ffffff"/>
-        <rect x="205" y="70" width="55" height="130" fill="#ffffff"/>
-        <polygon points="232,40 210,70 254,70" fill="#ffffff"/>
-        <rect x="270" y="110" width="40" height="90" fill="#ffffff"/>
-        <rect x="320" y="150" width="90" height="50" fill="#ffffff"/>
-        <rect x="420" y="95" width="50" height="105" fill="#ffffff"/>
-        <rect x="480" y="130" width="60" height="70" fill="#ffffff"/>
-        <rect x="550" y="80" width="45" height="120" fill="#ffffff"/>
-        <polygon points="572,50 550,80 594,80" fill="#ffffff"/>
-        <rect x="605" y="125" width="80" height="75" fill="#ffffff"/>
-        <rect x="695" y="100" width="50" height="100" fill="#ffffff"/>
-        <rect x="755" y="145" width="65" height="55" fill="#ffffff"/>
-        <rect x="830" y="85" width="55" height="115" fill="#ffffff"/>
-        <rect x="895" y="120" width="45" height="80" fill="#ffffff"/>
-        <rect x="950" y="150" width="90" height="50" fill="#ffffff"/>
-        <rect x="1050" y="100" width="50" height="100" fill="#ffffff"/>
-        <rect x="1110" y="135" width="60" height="65" fill="#ffffff"/>
-    </svg>-->
 
     <div class="auth-card-wrap">
         @if(session('success'))

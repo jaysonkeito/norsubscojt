@@ -19,6 +19,14 @@ class EnsureStudentProfileComplete
 
         if (
             $user
+            && $user->isUnassigned()
+            && !$request->routeIs('account-completion.show', 'account-completion.store', 'logout')
+        ) {
+            return redirect()->route('account-completion.show');
+        }
+
+        if (
+            $user
             && $user->isStudent()
             && $user->student
             && !$user->student->isProfileComplete()

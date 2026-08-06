@@ -34,14 +34,14 @@
 
     <div id="jobRoleOtherField" class="mb-3 d-none">
         <label class="form-label">Please specify</label>
-        <input type="text" name="job_role_other" id="jobRoleOther" class="form-control" value="{{ old('job_role_other') }}">
+        <input type="text" name="job_role_other" id="jobRoleOther" class="form-control" autocomplete="off" value="{{ old('job_role_other') }}">
     </div>
 
     <div id="insideCampusField" class="mb-3 d-none">
         <label class="form-label">Office Name</label>
         <div class="input-group">
             <span class="input-group-text">NORSU-BSC</span>
-            <input type="text" name="office_name" id="officeName" class="form-control" list="officeSuggestions" placeholder="e.g. MIS OFFICE" value="{{ old('office_name') }}">
+            <input type="text" name="office_name" id="officeName" class="form-control" autocomplete="off" list="officeSuggestions" placeholder="e.g. MIS OFFICE" value="{{ old('office_name') }}">
         </div>
         <datalist id="officeSuggestions">
             @foreach($officeSuggestions as $suggestion)
@@ -53,7 +53,7 @@
 
     <div id="outsideCampusField" class="mb-3 d-none">
         <label class="form-label">Company Name</label>
-        <input type="text" name="company_name" id="companyName" class="form-control" placeholder="e.g. Dumaguete IT Solutions Inc." value="{{ old('company_name') }}">
+        <input type="text" name="company_name" id="companyName" class="form-control" autocomplete="off" placeholder="e.g. Dumaguete IT Solutions Inc." value="{{ old('company_name') }}">
     </div>
 </div>
 

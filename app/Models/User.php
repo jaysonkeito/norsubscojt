@@ -78,6 +78,11 @@ class User extends Authenticatable
         return $this->role === 'dean';
     }
 
+    public function isUnassigned(): bool
+    {
+        return $this->role === 'unassigned';
+    }
+
     public function isPending(): bool
     {
         return $this->status === 'pending';
