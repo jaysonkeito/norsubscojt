@@ -165,9 +165,106 @@
         .auth-card a { color: var(--electric-blue); text-decoration: none; font-weight: 500; }
         .auth-card a:hover { text-decoration: underline; color: var(--electric-blue-dark); }
         .clock-o { width: 0.78em; height: 0.78em; display: inline-block; vertical-align: -0.05em; margin-right: 1px; color: var(--navy); }
+
+        /* ---- Split auth card: sliding welcome panel + form ----
+           Login: panel LEFT / form right. Register: panel RIGHT / form left.
+           The .pre class parks the panel on the opposite side; a tiny
+           script removes it right after load so it slides into place,
+           giving the "panel transfers across" feel between pages. */
+        .auth-body.has-split .auth-card-wrap { max-width: 1000px; }
+        .auth-body.has-split .auth-card-wrap > .alert { max-width: 960px; margin-left: auto; margin-right: auto; }
+        .auth-split-card {
+            position: relative;
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            min-height: 620px;
+        }
+        .auth-form-col {
+            grid-column: 1;
+            padding: 2.75rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: opacity .5s ease .15s, transform .5s ease .15s;
+        }
+        .auth-form-col.col-right { grid-column: 2; }
+        .auth-split-card.pre .auth-form-col { opacity: 0; transform: translateY(12px); }
+        .auth-welcome-panel {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 50%;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 2.25rem;
+            color: #fff;
+            background: linear-gradient(135deg, #1E3A8A 0%, var(--electric-blue-dark) 45%, var(--electric-blue) 100%);
+            transition: left .65s cubic-bezier(.65, 0, .35, 1);
+        }
+        .auth-split-card.panel-left .auth-welcome-panel { left: 0; }
+        .auth-split-card.pre.panel-left .auth-welcome-panel { left: 50%; }
+        .auth-split-card.pre.panel-right .auth-welcome-panel { left: 0; }
+        .auth-welcome-panel::before,
+        .auth-welcome-panel::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .auth-welcome-panel::before { width: 300px; height: 300px; top: -90px; left: -90px; background: rgba(255,255,255,0.08); }
+        .auth-welcome-panel::after { width: 240px; height: 240px; bottom: -80px; right: -70px; background: rgba(255,255,255,0.06); }
+        .welcome-inner { position: relative; z-index: 1; max-width: 340px; }
+        .welcome-inner h2 { color: #fff; font-weight: 800; font-size: clamp(1.6rem, 2.4vw, 2rem); letter-spacing: -0.02em; }
+        .welcome-inner p { color: rgba(255,255,255,0.85); }
+        .welcome-inner .welcome-cta-hint {
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: rgba(255,255,255,0.7);
+            margin: 1.5rem 0 0.5rem;
+        }
+        .btn-welcome-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: #fff;
+            color: var(--electric-blue-dark);
+            border-radius: 999px;
+            padding: .6rem 1.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.18);
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .btn-welcome-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15,23,42,0.24); color: var(--navy); }
+        .auth-welcome-panel .auth-brand-icon { background: rgba(255,255,255,0.16); margin: 0 auto 1.4rem; }
+        /* Brand block on the form side only shows when the panel is hidden (mobile) */
+        .form-brand { display: none; }
+        @media (max-width: 860px) {
+            .auth-welcome-panel { display: none; }
+            .auth-split-card { grid-template-columns: 1fr; min-height: 0; }
+            .auth-form-col, .auth-form-col.col-right { grid-column: 1; }
+            .form-brand { display: block; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .auth-welcome-panel, .auth-form-col { transition: none; }
+        }
     </style>
 </head>
-<body class="auth-body">
+@php
+    // Views opt into the two-panel split layout by defining a
+    // 'welcome_panel' section; 'welcome_side' picks which side it lands on.
+    $hasWelcomePanel = trim((string) $__env->yieldContent('welcome_panel')) !== '';
+    $panelSide = trim((string) $__env->yieldContent('welcome_side')) ?: 'left';
+@endphp
+<body class="auth-body {{ $hasWelcomePanel ? 'has-split' : '' }}">
 
     <div class="auth-card-wrap">
         @if(session('success'))
@@ -182,9 +279,33 @@
                 </ul>
             </div>
         @endif
-        @yield('content')
+        @if($hasWelcomePanel)
+            <div class="card auth-card auth-split-card panel-{{ $panelSide }} pre" id="authSplitCard">
+                <div class="auth-form-col {{ $panelSide === 'left' ? 'col-right' : 'col-left' }}">
+                    @yield('content')
+                </div>
+                <div class="auth-welcome-panel">
+                    @yield('welcome_panel')
+                </div>
+            </div>
+        @else
+            @yield('content')
+        @endif
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Kick off the panel slide-in one frame after load so the
+        // transition actually plays from the parked (.pre) position.
+        document.addEventListener('DOMContentLoaded', function () {
+            var card = document.getElementById('authSplitCard');
+            if (!card) return;
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    card.classList.remove('pre');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
