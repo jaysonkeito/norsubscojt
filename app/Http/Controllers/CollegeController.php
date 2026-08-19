@@ -4,20 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Models\College;
 use App\Models\Program;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class CollegeController extends Controller
 {
     /**
-     * List all colleges with their program counts.
+     * List all colleges with their program counts and total student counts.
      */
     public function index()
     {
-        $colleges = College::ordered()
-            ->withCount('programs')
-            ->get();
+        $programNamesByCollege = College::ordered()
+            ->with('programs')
+            ->get()
+            ->mapWithKeys(fn($college) => [
+                $college->id => $college->programs->pluck('name'),
+            ]);
 
-        return view('colleges.index', compact('colleges'));
+        $colleges = College::ordered()->withCount('programs')->get();
+
+        // Count students per college by matching students.course against program names
+        $studentCounts = [];
+        foreach ($programNamesByCollege as $collegeId => $programNames) {
+            $studentCounts[$collegeId] = $programNames->isNotEmpty()
+                ? Student::whereIn('course', $programNames)->count()
+                : 0;
+        }
+
+        return view('colleges.index', compact('colleges', 'studentCounts'));
+    }
+
+    /**
+     * Display a college's programs with the interns enrolled in each.
+     */
+    public function show(College $college)
+    {
+        $college->load('programs');
+        $college->loadCount('programs');
+
+        $programNames = $college->programs->pluck('name');
+
+        // Group students by their course (program name)
+        $studentsByProgram = collect();
+        if ($programNames->isNotEmpty()) {
+            $studentsByProgram = Student::whereIn('course', $programNames)
+                ->with('user')
+                ->get()
+                ->groupBy('course');
+        }
+
+        $programCounts = $studentsByProgram->map(fn($group) => $group->count());
+
+        return view('colleges.show', compact('college', 'studentsByProgram', 'programCounts'));
     }
 
     /**
@@ -49,7 +87,17 @@ class CollegeController extends Controller
     {
         $college->load('programs');
 
-        return view('colleges.edit', compact('college'));
+        // Count students per program within this college
+        $programNames = $college->programs->pluck('name');
+        $studentCounts = collect();
+        if ($programNames->isNotEmpty()) {
+            $studentCounts = Student::whereIn('course', $programNames)
+                ->selectRaw('course, count(*) as total')
+                ->groupBy('course')
+                ->pluck('total', 'course');
+        }
+
+        return view('colleges.edit', compact('college', 'studentCounts'));
     }
 
     /**

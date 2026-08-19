@@ -33,11 +33,12 @@
     {{-- Existing programs --}}
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-        <thead><tr><th>Program Name</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Program Name</th><th>Students</th><th>Actions</th></tr></thead>
         <tbody>
         @forelse($college->programs as $program)
             <tr>
                 <td>{{ $program->name }}</td>
+                <td><span class="badge bg-info">{{ $studentCounts[$program->name] ?? 0 }}</span></td>
                 <td>
                     <form action="{{ route('colleges.programs.destroy', [$college, $program]) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this program?');">
                         @csrf @method('DELETE')
@@ -46,7 +47,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="2" class="text-center text-muted">No programs yet. Add one above.</td></tr>
+            <tr><td colspan="3" class="text-center text-muted">No programs yet. Add one above.</td></tr>
         @endforelse
         </tbody>
     </table>

@@ -102,7 +102,7 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     // Admin only — direct Coordinator account management (not approval, just CRUD)
     Route::middleware('role:admin')->group(function () {
         Route::resource('coordinators', CoordinatorController::class)->except(['show']);
-        Route::resource('colleges', CollegeController::class)->except(['show']);
+        Route::resource('colleges', CollegeController::class);
         Route::post('/colleges/{college}/programs', [CollegeController::class, 'storeProgram'])->name('colleges.programs.store');
         Route::delete('/colleges/{college}/programs/{program}', [CollegeController::class, 'destroyProgram'])->name('colleges.programs.destroy');
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
