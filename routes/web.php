@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\CoordinatorProfileController;
 use App\Http\Controllers\CompanyProfileController;
@@ -45,6 +47,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // My Profile — view and edit own profile
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
     // Account Completion (Non-Student only) — shown to any logged-in user
     // whose role is still 'unassigned', locked there by the profile.gate
     // middleware until Designation is picked.
@@ -61,6 +67,7 @@ Route::middleware(['auth', 'profile.gate'])->group(function () {
     Route::get('/files/coordinators/{coordinator}/photo', [FileController::class, 'coordinatorPhoto'])->name('files.coordinator-photo');
     Route::get('/files/coordinators/{coordinator}/resume', [FileController::class, 'coordinatorResume'])->name('files.coordinator-resume');
     Route::get('/files/company-reps/{companyRep}/photo', [FileController::class, 'companyPhoto'])->name('files.company-photo');
+    Route::get('/files/users/{user}/photo', [FileController::class, 'userPhoto'])->name('files.user-photo');
     Route::get('/files/requirements/{requirement}/file', [FileController::class, 'requirementFile'])->name('files.requirement-file');
 
     // Intern profile completion (Student ID, Program, Year Level, etc.)

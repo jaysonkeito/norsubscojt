@@ -52,6 +52,17 @@ class FileController extends Controller
         return $this->stream($companyRep->companyProfile?->photo_path);
     }
 
+    /**
+     * User-level photos (Admin, Dean) — only the owner themselves;
+     * no other feature displays these.
+     */
+    public function userPhoto(Request $request, User $user)
+    {
+        abort_unless($request->user()->id === $user->id, 403);
+
+        return $this->stream($user->photo_path);
+    }
+
     public function requirementFile(Request $request, Requirement $requirement)
     {
         $user = $request->user();

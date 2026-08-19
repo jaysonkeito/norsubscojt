@@ -56,6 +56,7 @@
     @if(in_array(auth()->user()->role, ['admin', 'coordinator', 'dean', 'company']))
     <li class="nav-item"><a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active' : '' }}" href="{{ route('evaluations.index') }}"><i class="bi bi-clipboard-check"></i> Evaluations</a></li>
     @endif
+    <li class="nav-item"><a class="nav-link {{ request()->routeIs('profile.show') ? 'active' : '' }}" href="{{ route('profile.show') }}"><i class="bi bi-person-circle"></i> My Profile</a></li>
     <li class="nav-item"><a class="nav-link {{ request()->routeIs('timelogs.*') ? 'active' : '' }}" href="{{ route('timelogs.index') }}"><i class="bi bi-clock-history"></i> Time Logs (Attendance)</a></li>
     <li class="nav-item"><a class="nav-link {{ request()->routeIs('requirements.*') ? 'active' : '' }}" href="{{ route('requirements.index') }}"><i class="bi bi-file-earmark-text"></i> Requirements</a></li>
     <li class="nav-item"><a class="nav-link {{ request()->routeIs('announcements.*') ? 'active' : '' }}" href="{{ route('announcements.index') }}"><i class="bi bi-megaphone"></i> Announcements</a></li>

@@ -90,6 +90,27 @@
         }
         .sidebar-footer .user-name { color: #E2E8F0; font-weight: 500; }
         .sidebar-footer .badge { background: var(--navy-soft) !important; font-weight: 500; }
+        .sidebar-footer .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+        .sidebar-footer .user-avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--navy-soft);
+            border: 2px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94A3B8;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
 
         /* Mobile top bar */
         .mobile-topbar { background-color: var(--navy); }
@@ -203,7 +224,29 @@
                 @include('layouts.partials.sidebar-nav')
             </div>
             <div class="sidebar-footer">
-                <div class="user-name small mb-2">{{ auth()->user()->name }} <span class="badge">{{ ucfirst(auth()->user()->role) }}</span></div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    @php
+                        $photoUrl = null;
+                        if (auth()->user()->isStudent() && auth()->user()->student?->photo_path) {
+                            $photoUrl = route('files.student-photo', auth()->user()->student);
+                        } elseif (auth()->user()->isCoordinator() && auth()->user()->coordinatorProfile?->photo_path) {
+                            $photoUrl = route('files.coordinator-photo', auth()->user());
+                        } elseif (auth()->user()->isCompany() && auth()->user()->companyProfile?->photo_path) {
+                            $photoUrl = route('files.company-photo', auth()->user());
+                        } elseif (auth()->user()->photo_path) {
+                            $photoUrl = route('files.user-photo', auth()->user());
+                        }
+                    @endphp
+                    @if($photoUrl)
+                        <img src="{{ $photoUrl }}" alt="Profile" class="user-avatar">
+                    @else
+                        <div class="user-avatar-placeholder"><i class="bi bi-person-fill"></i></div>
+                    @endif
+                    <div class="d-flex flex-column overflow-hidden">
+                        <span class="user-name small text-truncate" style="max-width:140px;">{{ auth()->user()->name }}</span>
+                        <span class="badge" style="width:fit-content;">{{ ucfirst(auth()->user()->role) }}</span>
+                    </div>
+                </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button class="btn btn-sm btn-outline-light w-100" type="submit">Logout</button>
@@ -259,7 +302,29 @@
                 @include('layouts.partials.sidebar-nav')
             </div>
             <div class="sidebar-footer">
-                <div class="user-name small mb-2">{{ auth()->user()->name }} <span class="badge">{{ ucfirst(auth()->user()->role) }}</span></div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    @php
+                        $photoUrl = null;
+                        if (auth()->user()->isStudent() && auth()->user()->student?->photo_path) {
+                            $photoUrl = route('files.student-photo', auth()->user()->student);
+                        } elseif (auth()->user()->isCoordinator() && auth()->user()->coordinatorProfile?->photo_path) {
+                            $photoUrl = route('files.coordinator-photo', auth()->user());
+                        } elseif (auth()->user()->isCompany() && auth()->user()->companyProfile?->photo_path) {
+                            $photoUrl = route('files.company-photo', auth()->user());
+                        } elseif (auth()->user()->photo_path) {
+                            $photoUrl = route('files.user-photo', auth()->user());
+                        }
+                    @endphp
+                    @if($photoUrl)
+                        <img src="{{ $photoUrl }}" alt="Profile" class="user-avatar">
+                    @else
+                        <div class="user-avatar-placeholder"><i class="bi bi-person-fill"></i></div>
+                    @endif
+                    <div class="d-flex flex-column overflow-hidden">
+                        <span class="user-name small text-truncate" style="max-width:140px;">{{ auth()->user()->name }}</span>
+                        <span class="badge" style="width:fit-content;">{{ ucfirst(auth()->user()->role) }}</span>
+                    </div>
+                </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button class="btn btn-sm btn-outline-light w-100" type="submit">Logout</button>
