@@ -33,9 +33,6 @@
             <input type="radio" class="btn-check" name="account_type" id="typeNonStudent" value="non_student" autocomplete="off" {{ old('account_type') === 'non_student' ? 'checked' : '' }}>
             <label class="btn btn-outline-azure" for="typeNonStudent">Non-Student</label>
         </div>
-        <p class="text-muted small mb-4">
-            Non-Student? You'll pick your specific role (Dean / OJT Coordinator / Office-Company) on the next screen.
-        </p>
 
         <div class="row">
             <div class="col-md-6 mb-3">

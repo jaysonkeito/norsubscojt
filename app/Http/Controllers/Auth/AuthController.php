@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\CoordinatorProfileController;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Company;
@@ -150,8 +151,8 @@ class AuthController extends Controller
 
     /**
      * Account Completion — shown to any logged-in user whose role is still
-     * 'unassigned' (locked there by middleware). Lets them pick a
-     * Designation and, for Office/Company, the conditional fields.
+     * 'unassigned' (locked there by middleware). One page: pick the
+     * Designation and fill the matching profile details in the same form.
      */
     public function showAccountCompletion(Request $request)
     {
@@ -160,6 +161,8 @@ class AuthController extends Controller
         return view('profile.account-completion', [
             'user' => $request->user(),
             'officeSuggestions' => self::insideCampusOfficeSuggestions(),
+            'departments' => CoordinatorProfileController::departments(),
+            'designationTitles' => CoordinatorProfileController::designations(),
         ]);
     }
 
@@ -179,9 +182,36 @@ class AuthController extends Controller
 
         $rules = ['designation' => ['required', 'in:dean,coordinator,company']];
 
+        // Coordinator profile details, filled on the same form
+        if ($request->input('designation') === 'coordinator') {
+            $rules += [
+                'employee_id'         => ['required', 'string', 'max:255'],
+                'department'          => ['required', 'string'],
+                'designation_title'   => ['required', 'string'],
+                'prefix_title'        => ['nullable', 'string', 'max:255'],
+                'suffix_title'        => ['nullable', 'string', 'max:255'],
+                'institutional_email' => ['nullable', 'email', 'max:255'],
+                'gender'              => ['nullable', 'string'],
+                'civil_status'        => ['nullable', 'string'],
+                'mobile_number'       => ['nullable', 'string', 'max:255'],
+                'date_hired'          => ['nullable', 'date'],
+                'qualification'       => ['nullable', 'string'],
+                'specialization'      => ['nullable', 'string', 'max:255'],
+                'photo'               => ['nullable', 'image', 'max:2048'],
+                'resume'              => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+            ];
+        }
+
         if ($request->input('designation') === 'company') {
-            $rules['affiliation_type'] = ['required', 'in:inside_campus,outside_campus'];
-            $rules['job_role'] = ['required', 'in:Manager,Supervisor,Others'];
+            $rules += [
+                'affiliation_type' => ['required', 'in:inside_campus,outside_campus'],
+                'job_role'         => ['required', 'in:Manager,Supervisor,Others'],
+                'mobile_number'    => ['required', 'string', 'max:255'],
+                'office_landline'  => ['nullable', 'string', 'max:255'],
+                'id_badge_number'  => ['nullable', 'string', 'max:255'],
+                'alternate_email'  => ['nullable', 'email', 'max:255'],
+                'photo'            => ['nullable', 'image', 'max:2048'],
+            ];
 
             if ($request->input('job_role') === 'Others') {
                 $rules['job_role_other'] = ['required', 'string', 'max:255'];
@@ -194,19 +224,57 @@ class AuthController extends Controller
             }
         }
 
-        $designation = $request->validate($rules);
+        $validated = $request->validate($rules);
 
-        return $this->finalizeNonStudentAccount($user, $designation);
+        $role = $this->applyDesignation($user, $validated);
+
+        // Fill the profile record created by applyDesignation so the user
+        // skips the separate post-approval "Complete Your Profile" step.
+        if ($role === 'coordinator') {
+            $profileData = collect($validated)
+                ->except(['designation', 'photo', 'resume'])
+                ->put('designation', $validated['designation_title'])
+                ->forget('designation_title')
+                ->toArray();
+
+            if ($request->hasFile('photo')) {
+                $profileData['photo_path'] = $request->file('photo')->store('coordinator-photos', 'private');
+            }
+            if ($request->hasFile('resume')) {
+                $profileData['resume_path'] = $request->file('resume')->store('coordinator-resumes', 'private');
+            }
+
+            $user->coordinatorProfile->update($profileData);
+        }
+
+        if ($role === 'company') {
+            $profileData = collect($validated)
+                ->except(['designation', 'affiliation_type', 'job_role', 'job_role_other', 'office_name', 'company_name', 'photo'])
+                ->toArray();
+
+            if ($request->hasFile('photo')) {
+                $profileData['photo_path'] = $request->file('photo')->store('company-photos', 'private');
+            }
+
+            $user->companyProfile->update($profileData);
+        }
+
+        // They're 'pending' now — stay logged in, land on the pending-status page.
+        $approver = $role === 'dean' ? 'the System Admin' : 'the Dean';
+        $roleLabel = ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role];
+
+        return redirect()->route('account-pending.show')->with(
+            'success',
+            "Your {$roleLabel} account has been submitted and is pending approval from {$approver}."
+        );
     }
 
     /**
      * Applies the chosen Designation to an existing 'unassigned' account —
      * updates its real role, sets up any related profile/company records,
-     * flips it to 'pending', and logs the person out (they'll log back in
-     * once approved). Shared by the manual Account Completion flow above
-     * and the Google non-student path in GoogleAuthController.
+     * and flips it to 'pending'. Returns the applied role.
      */
-    public function finalizeNonStudentAccount(User $user, array $designation): \Illuminate\Http\RedirectResponse
+    private function applyDesignation(User $user, array $designation): string
     {
         $role = $designation['designation']; // 'dean' | 'coordinator' | 'company'
 
@@ -236,14 +304,7 @@ class AuthController extends Controller
             CompanyProfile::create(['user_id' => $user->id]);
         }
 
-        // They're 'pending' now — stay logged in, land on the pending-status page.
-        $approver = $role === 'dean' ? 'the System Admin' : 'the Dean';
-        $roleLabel = ['dean' => 'Dean', 'coordinator' => 'OJT Coordinator', 'company' => 'Office/Company'][$role];
-
-        return redirect()->route('account-pending.show')->with(
-            'success',
-            "Your {$roleLabel} account has been submitted and is pending approval from {$approver}."
-        );
+        return $role;
     }
 
     /**
