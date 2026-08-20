@@ -162,7 +162,6 @@ class AuthController extends Controller
             'user' => $request->user(),
             'officeSuggestions' => self::insideCampusOfficeSuggestions(),
             'departments' => CoordinatorProfileController::departments(),
-            'designationTitles' => CoordinatorProfileController::designations(),
         ]);
     }
 
@@ -185,20 +184,19 @@ class AuthController extends Controller
         // Coordinator profile details, filled on the same form
         if ($request->input('designation') === 'coordinator') {
             $rules += [
-                'employee_id'         => ['required', 'string', 'max:255'],
-                'department'          => ['required', 'string'],
-                'designation_title'   => ['required', 'string'],
-                'prefix_title'        => ['nullable', 'string', 'max:255'],
-                'suffix_title'        => ['nullable', 'string', 'max:255'],
-                'institutional_email' => ['nullable', 'email', 'max:255'],
-                'gender'              => ['nullable', 'string'],
-                'civil_status'        => ['nullable', 'string'],
-                'mobile_number'       => ['nullable', 'string', 'max:255'],
-                'date_hired'          => ['nullable', 'date'],
-                'qualification'       => ['nullable', 'string'],
-                'specialization'      => ['nullable', 'string', 'max:255'],
-                'photo'               => ['nullable', 'image', 'max:2048'],
-                'resume'              => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+                'employee_id'               => ['required', 'string', 'max:255'],
+                'department'                => ['required', 'string'],
+                'prefix_title'              => ['nullable', 'string', 'max:255'],
+                'suffix_title'              => ['nullable', 'string', 'max:255'],
+                'institutional_email'       => ['nullable', 'email', 'max:255'],
+                'gender'                    => ['nullable', 'string'],
+                'civil_status'              => ['nullable', 'string'],
+                'coordinator_mobile_number' => ['nullable', 'string', 'max:255'],
+                'date_hired'                => ['nullable', 'date'],
+                'qualification'             => ['nullable', 'string'],
+                'specialization'            => ['nullable', 'string', 'max:255'],
+                'coordinator_photo'         => ['nullable', 'image', 'max:2048'],
+                'coordinator_resume'        => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
             ];
         }
 
@@ -210,7 +208,7 @@ class AuthController extends Controller
                 'office_landline'  => ['nullable', 'string', 'max:255'],
                 'id_badge_number'  => ['nullable', 'string', 'max:255'],
                 'alternate_email'  => ['nullable', 'email', 'max:255'],
-                'photo'            => ['nullable', 'image', 'max:2048'],
+                'company_photo'    => ['nullable', 'image', 'max:2048'],
             ];
 
             if ($request->input('job_role') === 'Others') {
@@ -232,16 +230,16 @@ class AuthController extends Controller
         // skips the separate post-approval "Complete Your Profile" step.
         if ($role === 'coordinator') {
             $profileData = collect($validated)
-                ->except(['designation', 'photo', 'resume'])
-                ->put('designation', $validated['designation_title'])
-                ->forget('designation_title')
+                ->except(['designation', 'coordinator_photo', 'coordinator_resume', 'coordinator_mobile_number'])
+                ->put('designation', 'OJT Coordinator')
+                ->put('mobile_number', $validated['coordinator_mobile_number'] ?? null)
                 ->toArray();
 
-            if ($request->hasFile('photo')) {
-                $profileData['photo_path'] = $request->file('photo')->store('coordinator-photos', 'private');
+            if ($request->hasFile('coordinator_photo')) {
+                $profileData['photo_path'] = $request->file('coordinator_photo')->store('coordinator-photos', 'private');
             }
-            if ($request->hasFile('resume')) {
-                $profileData['resume_path'] = $request->file('resume')->store('coordinator-resumes', 'private');
+            if ($request->hasFile('coordinator_resume')) {
+                $profileData['resume_path'] = $request->file('coordinator_resume')->store('coordinator-resumes', 'private');
             }
 
             $user->coordinatorProfile->update($profileData);
@@ -249,11 +247,11 @@ class AuthController extends Controller
 
         if ($role === 'company') {
             $profileData = collect($validated)
-                ->except(['designation', 'affiliation_type', 'job_role', 'job_role_other', 'office_name', 'company_name', 'photo'])
+                ->except(['designation', 'affiliation_type', 'job_role', 'job_role_other', 'office_name', 'company_name', 'company_photo'])
                 ->toArray();
 
-            if ($request->hasFile('photo')) {
-                $profileData['photo_path'] = $request->file('photo')->store('company-photos', 'private');
+            if ($request->hasFile('company_photo')) {
+                $profileData['photo_path'] = $request->file('company_photo')->store('company-photos', 'private');
             }
 
             $user->companyProfile->update($profileData);

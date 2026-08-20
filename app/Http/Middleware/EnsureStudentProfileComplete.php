@@ -48,9 +48,9 @@ class EnsureStudentProfileComplete
             && $user->isCoordinator()
             && $user->coordinatorProfile
             && !$user->coordinatorProfile->isProfileComplete()
-            && !$request->routeIs('coordinator-profile.complete', 'coordinator-profile.complete.store', 'logout')
+            && !$request->routeIs('profile.show', 'profile.update', 'logout')
         ) {
-            return redirect()->route('coordinator-profile.complete');
+            return redirect()->route('profile.show');
         }
 
         if (
@@ -58,9 +58,9 @@ class EnsureStudentProfileComplete
             && $user->isCompany()
             && $user->companyProfile
             && !$user->companyProfile->isProfileComplete()
-            && !$request->routeIs('company-profile.complete', 'company-profile.complete.store', 'logout')
+            && !$request->routeIs('profile.show', 'profile.update', 'logout')
         ) {
-            return redirect()->route('company-profile.complete');
+            return redirect()->route('profile.show');
         }
 
         return $next($request);
