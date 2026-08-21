@@ -150,9 +150,30 @@ class AuthController extends Controller
     }
 
     /**
+     * Designation options for the Account Completion form. The chosen
+     * title determines the account role (see roleFromDesignation).
+     */
+    public static function designationOptions(): array
+    {
+        return array_merge(CoordinatorProfileController::designations(), ['Office / Company']);
+    }
+
+    public static function roleFromDesignation(string $title): string
+    {
+        if ($title === 'Dean') {
+            return 'dean';
+        }
+        if ($title === 'Office / Company') {
+            return 'company';
+        }
+        return 'coordinator';
+    }
+
+    /**
      * Account Completion — shown to any logged-in user whose role is still
-     * 'unassigned' (locked there by middleware). One page: pick the
-     * Designation and fill the matching profile details in the same form.
+     * 'unassigned' (locked there by middleware). One page: the Designation
+     * field (right after Department) drives the role and which fields are
+     * required.
      */
     public function showAccountCompletion(Request $request)
     {
@@ -162,6 +183,7 @@ class AuthController extends Controller
             'user' => $request->user(),
             'officeSuggestions' => self::insideCampusOfficeSuggestions(),
             'departments' => CoordinatorProfileController::departments(),
+            'designationOptions' => self::designationOptions(),
         ]);
     }
 
@@ -179,10 +201,12 @@ class AuthController extends Controller
         $user = $request->user();
         abort_unless($user->isUnassigned(), 403);
 
-        $rules = ['designation' => ['required', 'in:dean,coordinator,company']];
+        $rules = ['designation' => ['required', 'string', 'in:' . implode(',', self::designationOptions())]];
+
+        $role = self::roleFromDesignation((string) $request->input('designation'));
 
         // Coordinator profile details, filled on the same form
-        if ($request->input('designation') === 'coordinator') {
+        if ($role === 'coordinator') {
             $rules += [
                 'employee_id'               => ['required', 'string', 'max:255'],
                 'department'                => ['required', 'string'],
@@ -200,7 +224,7 @@ class AuthController extends Controller
             ];
         }
 
-        if ($request->input('designation') === 'company') {
+        if ($role === 'company') {
             $rules += [
                 'affiliation_type' => ['required', 'in:inside_campus,outside_campus'],
                 'job_role'         => ['required', 'in:Manager,Supervisor,Others'],
@@ -224,14 +248,26 @@ class AuthController extends Controller
 
         $validated = $request->validate($rules);
 
-        $role = $this->applyDesignation($user, $validated);
+        // applyDesignation expects the mapped role under the 'designation' key
+        $payload = ['designation' => $role];
+
+        if ($role === 'company') {
+            $payload['affiliation_type'] = $validated['affiliation_type'];
+            $payload['job_role'] = $validated['job_role'];
+            $payload['job_role_other'] = $validated['job_role_other'] ?? null;
+            $payload[$validated['affiliation_type'] === 'inside_campus' ? 'office_name' : 'company_name'] =
+                $validated['affiliation_type'] === 'inside_campus' ? $validated['office_name'] : $validated['company_name'];
+        }
+
+        $role = $this->applyDesignation($user, $payload);
 
         // Fill the profile record created by applyDesignation so the user
         // skips the separate post-approval "Complete Your Profile" step.
         if ($role === 'coordinator') {
+            // $validated['designation'] holds the job title, which maps
+            // straight onto the profile's designation column.
             $profileData = collect($validated)
-                ->except(['designation', 'coordinator_photo', 'coordinator_resume', 'coordinator_mobile_number'])
-                ->put('designation', 'OJT Coordinator')
+                ->except(['coordinator_photo', 'coordinator_resume', 'coordinator_mobile_number'])
                 ->put('mobile_number', $validated['coordinator_mobile_number'] ?? null)
                 ->toArray();
 
